@@ -83,6 +83,19 @@ const TOOLS = ['🔵 Selenium','⚫ Playwright','🟢 Cypress','🔴 JMeter','�
 export default function Home() {
   useFadeIn();
 
+  // 🛡️ Smooth Scroll Guardian (Fixes cross-page #hash links)
+  useEffect(() => {
+    if (window.location.hash) {
+      const id = window.location.hash.substring(1);
+      const el = document.getElementById(id);
+      if (el) {
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    }
+  }, []);
+
   const [formState, setFormState] = useState({ 
     name: '', email: '', phone: '', countryCode: '+91', service: 'Functional Testing', message: '' 
   });
@@ -91,6 +104,31 @@ export default function Home() {
   const [submitting, setSubmitting] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
   const [showCountryList, setShowCountryList] = useState(false);
+
+  // CAPTCHA System
+  const [captcha, setCaptcha] = useState({ a: 0, b: 0, op: '+' });
+  const [userCaptcha, setUserCaptcha] = useState('');
+  const [captchaError, setCaptchaError] = useState(false);
+
+  const generateCaptcha = () => {
+    const ops = ['+', '-'];
+    const op = ops[Math.floor(Math.random() * ops.length)];
+    let a = Math.floor(Math.random() * 90) + 10;
+    let b = Math.floor(Math.random() * 90) + 10;
+    
+    // Ensure subtraction doesn't result in negative numbers for better UX
+    if (op === '-' && b > a) {
+      [a, b] = [b, a]; 
+    }
+
+    setCaptcha({ a, b, op });
+    setUserCaptcha('');
+    setCaptchaError(false);
+  };
+
+  useEffect(() => {
+    generateCaptcha();
+  }, []);
 
   const [faqOpen, setFaqOpen] = useState(null);
   const faqs = [
@@ -104,6 +142,31 @@ export default function Home() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (submitting) return;
+
+    // 🛡️ BOT CHECK 0: Rate Limit (1 submission every 30 seconds)
+    const lastSub = localStorage.getItem('varsaka_last_sub');
+    const now = Date.now();
+    if (lastSub && (now - parseInt(lastSub)) < 30000) {
+      setBtnTxt('🛡️ Please wait 30s');
+      setTimeout(() => setBtnTxt('Send Message →'), 2000);
+      return;
+    }
+
+    // 🛡️ BOT CHECK 1: Honeypot
+    if (e.target._honey.value) return; 
+
+    // 🛡️ BOT CHECK 2: Hardened Math CAPTCHA
+    const expected = captcha.op === '+' ? (captcha.a + captcha.b) : (captcha.a - captcha.b);
+    if (parseInt(userCaptcha) !== expected) {
+      setCaptchaError(true);
+      setBtnTxt('❌ Incorrect Math!');
+      setTimeout(() => {
+        setBtnTxt('Send Message →');
+        setCaptchaError(false);
+      }, 2000);
+      return;
+    }
+
     setSubmitting(true);
     setBtnTxt('Sending...');
     setBtnColor('');
@@ -129,6 +192,9 @@ export default function Home() {
 
       if (sbError) throw sbError;
       
+      // 🛡️ Log submission time for security
+      localStorage.setItem('varsaka_last_sub', Date.now().toString());
+
       // 3. Sync to Google Sheet (Live Mirror)
       const gsUrl = import.meta.env.VITE_GS_SYNC_URL;
       if (gsUrl) {
@@ -147,6 +213,7 @@ export default function Home() {
         setBtnColor(''); 
         setSubmitting(false); 
         setFormState({ name:'', email:'', phone:'', countryCode: '+91', service:'Functional Testing', message:'' }); 
+        generateCaptcha(); // Reset CAPTCHA for next use
       }, 3500);
     } catch (err) {
       console.error('Submit Error:', err);
@@ -365,8 +432,8 @@ export default function Home() {
                 <div style={{display:'flex', gap:'5px', position:'relative'}}>
                   <div 
                     style={{
-                      width:'100px', padding:'0.75rem', borderRadius:'8px', border:'1px solid #e2e8f0', 
-                      background:'white', cursor:'pointer', display:'flex', justifyContent:'space-between', alignItems:'center',
+                      width:'100px', padding:'0.75rem', borderRadius:'8px', border:'1.5px solid var(--border)', 
+                      background:'var(--bg-white)', color:'var(--text)', cursor:'pointer', display:'flex', justifyContent:'space-between', alignItems:'center',
                       fontSize: '0.9rem', fontWeight: '600'
                     }}
                     onClick={() => setShowCountryList(!showCountryList)}
@@ -378,13 +445,13 @@ export default function Home() {
                   {showCountryList && (
                     <div className="country-dropdown-list" style={{
                       position:'absolute', top:'100%', left:0, width:'250px', maxHeight:'250px', 
-                      overflowY:'auto', background:'white', border:'1px solid #e2e8f0', 
-                      borderRadius:'12px', boxShadow:'0 10px 25px rgba(0,0,0,0.1)', zIndex:1000, marginTop:'5px'
+                      overflowY:'auto', background:'var(--bg-white)', border:'1.5px solid var(--border)', 
+                      borderRadius:'12px', boxShadow:'var(--shadow-md)', zIndex:1000, marginTop:'5px'
                     }}>
                       <input 
                         type="text" 
                         placeholder="Search country..." 
-                        style={{width:'100%', padding:'10px', border:'none', borderBottom:'1px solid #f1f5f9', position:'sticky', top:0, background:'white'}}
+                        style={{width:'100%', padding:'10px', border:'none', borderBottom:'1px solid var(--border)', position:'sticky', top:0, background:'var(--bg-white)', color:'var(--text)'}}
                         value={countrySearch}
                         onChange={e => setCountrySearch(e.target.value)}
                         autoFocus
@@ -393,13 +460,13 @@ export default function Home() {
                       {ALL_COUNTRIES.filter(c => c.name.toLowerCase().includes(countrySearch.toLowerCase()) || c.code.includes(countrySearch)).map(c => (
                         <div 
                           key={c.name}
-                          style={{padding:'12px', cursor:'pointer', fontSize:'0.85rem', borderBottom:'1px solid #f8fafc', display:'flex', gap:'10px'}}
+                          style={{padding:'12px', cursor:'pointer', fontSize:'0.85rem', borderBottom:'1px solid var(--border)', display:'flex', gap:'10px', color:'var(--text)'}}
                           onClick={() => {
                             setFormState({...formState, countryCode: c.code});
                             setShowCountryList(false);
                             setCountrySearch('');
                           }}
-                          onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'}
+                          onMouseOver={e => e.currentTarget.style.background = 'var(--blue-light)'}
                           onMouseOut={e => e.currentTarget.style.background = 'transparent'}
                         >
                           <span>{c.flag}</span>
@@ -427,6 +494,32 @@ export default function Home() {
                 </select>
               </div>
               <div className="form-group"><label>Tell Us About Your Project</label><textarea name="message" placeholder="Just a brief about your project" value={formState.message} onChange={handleChange} /></div>
+              
+              {/* 🛡️ Math CAPTCHA UI */}
+              <div className="form-group captcha-group">
+                <label>Security Verification</label>
+                <div style={{display:'flex', gap:'10px', alignItems:'center'}}>
+                  <div className="captcha-box" style={{
+                    padding: '0.75rem 1rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px',
+                    fontWeight: '700', color: '#1e293b', fontSize: '1rem', minWidth: '100px', textAlign: 'center'
+                  }}>
+                    {captcha.a} {captcha.op} {captcha.b} = 
+                  </div>
+                  <input 
+                    type="number" 
+                    placeholder="?" 
+                    value={userCaptcha} 
+                    onChange={e => {setUserCaptcha(e.target.value); setCaptchaError(false);}}
+                    style={{width: '80px', borderColor: captchaError ? '#ef4444' : '#e2e8f0'}}
+                    required
+                  />
+                  <button type="button" onClick={generateCaptcha} style={{
+                    background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '1.2rem'
+                  }} title="Refresh Question">↻</button>
+                </div>
+                {captchaError && <p style={{color: '#ef4444', fontSize: '0.75rem', marginTop: '5px'}}>Incorrect answer. Please try again.</p>}
+              </div>
+
               <input type="text" name="_honey" style={{display:'none'}} />
               <button type="submit" className="submit-btn" id="submitBtn" disabled={submitting} style={btnColor ? {background:btnColor} : {}}>
                 {btnTxt}

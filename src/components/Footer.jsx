@@ -46,10 +46,10 @@ export default function Footer() {
       </div>
 
       <div className="footer-bottom">
-        <p>© 2025 Varsaka. All rights reserved. Made with ❤️ in Hyderabad, India.</p>
+        <p>© January 2026 Varsaka. All rights reserved. Made with ❤️ in Hyderabad, India.</p>
         <div className="social-links">
-          <a href="https://www.linkedin.com/company/varsaka-labs-llp/posts/?feedView=all" className="social-link" aria-label="LinkedIn">💼</a>
-          <a href="https://www.instagram.com/varsakalabs/?hl=en" className="social-link" aria-label="Instagram">📷</a>
+          <a href="https://www.linkedin.com/company/varsaka-labs-llp/posts/?feedView=all" className="social-link" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer">💼</a>
+          <a href="https://www.instagram.com/varsakalabs/?hl=en" className="social-link" aria-label="Instagram" target="_blank" rel="noopener noreferrer">📷</a>
         </div>
       </div>
     </footer>

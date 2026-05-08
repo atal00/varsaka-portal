@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import './Chatbot.css';
 
@@ -20,10 +21,16 @@ const KNOWLEDGE_BASE = [
   { keywords: ['who are you', 'your name', 'what are you'], reply: "I'm the Varsaka AI Assistant! I'm here to provide information about our services and help you connect with our human experts." },
   { keywords: ['human', 'person', 'real agent', 'speak to'], reply: "I can definitely get a human to help you! Would you like to leave your email so one of our consultants can reach out?" },
   { keywords: ['mobile', 'app', 'android', 'ios'], reply: "Yes! We offer extensive Mobile App Testing for both iOS and Android, including automation with Appium and real-device testing." },
-  { keywords: ['fast', 'speed', 'response', 'quick'], reply: "We value your time! We typically respond to all inquiries within 4 business hours." }
+  { keywords: ['compliance', 'soc2', 'iso', 'security standard', 'gdpr'], reply: "Security and data privacy are our top priorities. 🛡️ We follow SOC2 and ISO 27001 best practices, and we are fully GDPR compliant in our testing processes." },
+  { keywords: ['salesforce', 'sap', 'oracle', 'erp', 'crm'], reply: "We have specialized teams for Platform Testing, including Salesforce, SAP, and Oracle ERP environments. We focus on business process validation and integration testing." },
+  { keywords: ['security', 'vapt', 'vulnerability', 'pentest', 'hacker', 'owasp'], reply: "Our Security Center of Excellence (CoE) provides VAPT, OWASP Top 10 audits, and API security testing to ensure your application is fortified against attacks." },
+  { keywords: ['trial', 'poc', 'proof of concept', 'free'], reply: "Yes! We offer a limited Proof of Concept (POC) for qualified projects. It's a great way to see our automation and reporting in action before committing." },
+  { keywords: ['cicd', 'pipeline', 'devops', 'jenkins', 'gitlab', 'azure'], reply: "We specialize in 'Shift-Left' testing! 🔄 We integrate automated tests directly into your Jenkins, GitLab, or Azure DevOps pipelines for instant feedback." },
+  { keywords: ['fast', 'speed', 'performance', 'load', 'stress', 'scale'], reply: "We use JMeter, k6, and Gatling to simulate thousands of users. We help you find bottlenecks so your app stays fast during peak traffic!" }
 ];
 
 export default function Chatbot() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState(INITIAL_MSGS);
   const [input, setInput] = useState('');
@@ -32,6 +39,10 @@ export default function Chatbot() {
   const [userContext, setUserContext] = useState('');
   const [showOptions, setShowOptions] = useState(true);
   const [sending, setSending] = useState(false);
+  const [isVerifyingHuman, setIsVerifyingHuman] = useState(false);
+  const [pendingLead, setPendingLead] = useState(null);
+  const [verificationMath, setVerificationMath] = useState({ a: 0, b: 0 });
+  const [botStartTime] = useState(Date.now());
   const bodyRef = useRef(null);
 
   const addMsg = (text, from) => {
@@ -58,6 +69,21 @@ export default function Chatbot() {
       addMsg('Book a Meeting / Talk to Human', 'user');
       setIsLeadMode(true);
       botReply('Excellent choice! Please leave your Email Address and a brief note about your project. I\'ll notify our consultants immediately.');
+    } else if (action === 'security') {
+      addMsg('I need a Security Audit', 'user');
+      botReply('Our Security Center of Excellence (CoE) handles full VAPT, OWASP Top 10 audits, and API security testing. Would you like a quote for an audit?');
+      setTimeout(() => setShowOptions(true), 1500);
+    } else if (action === 'cases') {
+      addMsg('Show me Case Studies', 'user');
+      botReply('We have delivered zero-defect releases for Fintech, E-commerce, and SaaS platforms globally! You can check our Case Studies page or I can summarize one for you right here.');
+      setTimeout(() => setShowOptions(true), 1500);
+    } else if (action === 'careers') {
+      addMsg('Are you hiring?', 'user');
+      botReply('We are always looking for automation experts! Redirecting you to our Careers page now... Good luck! 💼');
+      setTimeout(() => {
+        setOpen(false); // Close bot to show page
+        navigate('/careers');
+      }, 1500);
     } else {
       addMsg(reply === 'services' ? 'Tell me about your services' : 'How do I contact you?', 'user');
       if (reply === 'services') {
@@ -69,6 +95,66 @@ export default function Chatbot() {
     }
   };
 
+  const finalizeLead = async (text) => {
+    const payload = { 
+      _subject: 'High-Priority Chatbot Lead', 
+      'User Message': text, 
+      'Chat History Context': userContext || 'Direct Inquiry' 
+    };
+
+    try {
+      const res = await fetch(FS_TARGET, { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, 
+        body: JSON.stringify(payload) 
+      });
+      
+      const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+      const extractedEmail = emailMatch ? emailMatch[0] : 'bot-lead@varsaka.com';
+
+      // 🛡️ BOT CHECK 0: Rate Limit (1 submission every 30 seconds)
+      const lastSub = localStorage.getItem('varsaka_last_sub');
+      const now = Date.now();
+      if (lastSub && (now - parseInt(lastSub)) < 30000) {
+        botReply("🛡️ Security Alert: You've already sent a request recently. Please wait a moment.");
+        return;
+      }
+      
+      await supabase.from('leads').insert([{
+        name: 'Advanced Bot Lead',
+        email: extractedEmail,
+        service: 'Bot Consultation',
+        message: `[Context: ${userContext}] | [Lead Info: ${text}]`,
+        source: 'AI Chatbot' 
+      }]);
+
+      // 🛡️ Log submission time for security
+      localStorage.setItem('varsaka_last_sub', Date.now().toString());
+
+      const gsUrl = import.meta.env.VITE_GS_SYNC_URL;
+      if (gsUrl) {
+        fetch(gsUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          body: JSON.stringify({ 
+            action: 'add', 
+            name: 'AI Bot Lead',
+            email: extractedEmail,
+            phone: "'No Phone",
+            service: 'Bot Consultation',
+            msg: `[Context: ${userContext}] | [Lead Info: ${text}]`
+          })
+        }).catch(err => console.error('GS Bot Sync Error:', err));
+      }
+
+      botReply(res.ok ? '✅ All set! A Varsaka expert will reach out to you within 4 hours. Anything else I can help with?' : '❌ I had a slight connection issue, but don\'t worry—I\'ve logged your request.');
+      setTimeout(() => setShowOptions(true), 2000);
+    } catch (err) {
+      console.error('Chatbot Error:', err);
+      botReply('❌ Connection error. Please try our website contact form.');
+    }
+  };
+
   const handleSend = async () => {
     const text = input.trim();
     if (!text || sending || isTyping) return;
@@ -76,59 +162,31 @@ export default function Chatbot() {
     setShowOptions(false);
     addMsg(text, 'user');
 
-    if (isLeadMode) {
-      setIsLeadMode(false);
-      setSending(true);
-      botReply('Got it! Sending your details to our team now...');
-      
-      const payload = { 
-        _subject: 'High-Priority Chatbot Lead', 
-        'User Message': text, 
-        'Chat History Context': userContext || 'Direct Inquiry' 
-      };
-
-      try {
-        const res = await fetch(FS_TARGET, { 
-          method: 'POST', 
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, 
-          body: JSON.stringify(payload) 
-        });
-        
-        const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-        const extractedEmail = emailMatch ? emailMatch[0] : 'bot-lead@varsaka.com';
-        
-        await supabase.from('leads').insert([{
-          name: 'Advanced Bot Lead',
-          email: extractedEmail,
-          service: 'Bot Consultation',
-          message: `[Context: ${userContext}] | [Lead Info: ${text}]`,
-          source: 'AI Chatbot' // 🤖 Source Tag
-        }]);
-
-        // 🚀 SYNC TO GOOGLE SHEETS
-        const gsUrl = import.meta.env.VITE_GS_SYNC_URL;
-        if (gsUrl) {
-          fetch(gsUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify({ 
-              action: 'add', 
-              name: 'AI Bot Lead',
-              email: extractedEmail,
-              phone: "'No Phone", // Bot currently doesn't ask for phone specifically
-              service: 'Bot Consultation',
-              msg: `[Context: ${userContext}] | [Lead Info: ${text}]`
-            })
-          }).catch(err => console.error('GS Bot Sync Error:', err));
-        }
-
-        botReply(res.ok ? '✅ All set! A Varsaka expert will reach out to you within 4 hours. Anything else I can help with?' : '❌ I had a slight connection issue, but don\'t worry—I\'ve logged your request. You can also email us at info@varsaka.com.');
-        setTimeout(() => setShowOptions(true), 2000);
-      } catch (err) {
-        console.error('Chatbot Error:', err);
-        botReply('❌ Connection error. Please try our website contact form or email us at info@varsaka.com.');
+    if (isVerifyingHuman) {
+      if (parseInt(text) === (verificationMath.a + verificationMath.b)) {
+        setIsVerifyingHuman(false);
+        setSending(true);
+        botReply('Verification successful! 🚀 Sending your details now...');
+        await finalizeLead(pendingLead);
+        setPendingLead(null);
+        setSending(false);
+      } else {
+        botReply(`❌ That's not quite right. For security, what is ${verificationMath.a} + ${verificationMath.b}?`);
       }
-      setSending(false);
+      return;
+    }
+
+    if (isLeadMode) {
+      // 🛡️ BOT CHECK: Speed Trap
+      if (Date.now() - botStartTime < 3000) return; // Ignore if too fast
+
+      setIsLeadMode(false);
+      const a = Math.floor(Math.random() * 10) + 1;
+      const b = Math.floor(Math.random() * 10) + 1;
+      setVerificationMath({ a, b });
+      setPendingLead(text);
+      setIsVerifyingHuman(true);
+      botReply(`Got it! One last thing for security: What is ${a} + ${b}?`);
       return;
     }
 
@@ -206,8 +264,11 @@ export default function Chatbot() {
             {showOptions && !isTyping && (
               <div className="chat-options">
                 <button className="chat-opt" onClick={() => handleOption('services', null)}>Our QA Services 🧪</button>
-                <button className="chat-opt" onClick={() => handleOption('contact', null)}>Contact Info 📧</button>
+                <button className="chat-opt" onClick={() => handleOption(null, 'cases')}>Success Stories 📁</button>
                 <button className="chat-opt" onClick={() => handleOption(null, 'meet')}>Free Consultation 🚀</button>
+                <button className="chat-opt" onClick={() => handleOption(null, 'security')}>Security Audit 🛡️</button>
+                <button className="chat-opt" onClick={() => handleOption('contact', null)}>Contact Info 📧</button>
+                <button className="chat-opt" onClick={() => handleOption(null, 'careers')}>Work @ Varsaka 💼</button>
               </div>
             )}
           </div>

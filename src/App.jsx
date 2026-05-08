@@ -1,19 +1,21 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Chatbot from './components/Chatbot';
 import ScrollTop from './components/ScrollTop';
 import Home from './pages/Home';
-import About from './pages/About';
-import Blog from './pages/Blog';
-import Careers from './pages/Careers';
-import CaseStudies from './pages/CaseStudies';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import TermsOfService from './pages/TermsOfService';
-import NdaTemplate from './pages/NdaTemplate';
-import Login from './pages/Login';
-import Portal from './pages/Portal';
+
+// 🚀 Performance: Lazy Load non-critical pages
+const About = lazy(() => import('./pages/About'));
+const Blog = lazy(() => import('./pages/Blog'));
+const Careers = lazy(() => import('./pages/Careers'));
+const CaseStudies = lazy(() => import('./pages/CaseStudies'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('./pages/TermsOfService'));
+const NdaTemplate = lazy(() => import('./pages/NdaTemplate'));
+const Login = lazy(() => import('./pages/Login'));
+const Portal = lazy(() => import('./pages/Portal'));
 import './index.css';
 
 function AnimationTrigger() {
@@ -42,18 +44,30 @@ function AnimationTrigger() {
 
 export default function App() {
   useEffect(() => {
+    // 🛡️ THE GREAT WALL: Anti-Hacker Protection
     const block = (e) => e.preventDefault();
     document.addEventListener('contextmenu', block);
+
     const keyBlock = (e) => {
-      if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 67 || e.keyCode == 74)) || (e.ctrlKey && e.keyCode == 85)) {
+      // Block F12, Ctrl+Shift+I (Inspect), Ctrl+Shift+J (Console), Ctrl+U (Source), Ctrl+S (Save)
+      if (
+        e.keyCode === 123 || 
+        (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || 
+        (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83))
+      ) {
         e.preventDefault();
         return false;
       }
     };
     document.addEventListener('keydown', keyBlock);
+
+    // Disable Drag & Drop (prevents people from stealing assets easily)
+    document.addEventListener('dragstart', block);
+
     return () => {
       document.removeEventListener('contextmenu', block);
       document.removeEventListener('keydown', keyBlock);
+      document.removeEventListener('dragstart', block);
     };
   }, []);
 
@@ -65,21 +79,23 @@ export default function App() {
       <Chatbot />
       <ScrollTop />
 
-      <Routes>
-        {/* Public Pages with Nav/Footer */}
-        <Route path="/" element={<><Navbar /><Home /><Footer /></>} />
-        <Route path="/about" element={<><Navbar /><About /><Footer /></>} />
-        <Route path="/blog" element={<><Navbar /><Blog /><Footer /></>} />
-        <Route path="/careers" element={<><Navbar /><Careers /><Footer /></>} />
-        <Route path="/case-studies" element={<><Navbar /><CaseStudies /><Footer /></>} />
-        <Route path="/privacy-policy" element={<><Navbar /><PrivacyPolicy /><Footer /></>} />
-        <Route path="/terms-of-service" element={<><Navbar /><TermsOfService /><Footer /></>} />
-        <Route path="/nda-template" element={<><Navbar /><NdaTemplate /><Footer /></>} />
-        
-        {/* Portal Pages (Now with Global Bot) */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/portal" element={<Portal />} />
-      </Routes>
+      <Suspense fallback={<div style={{height: '100vh', background: 'var(--bg-white)'}} />}>
+        <Routes>
+          {/* Public Pages with Nav/Footer */}
+          <Route path="/" element={<><Navbar /><Home /><Footer /></>} />
+          <Route path="/about" element={<><Navbar /><About /><Footer /></>} />
+          <Route path="/blog" element={<><Navbar /><Blog /><Footer /></>} />
+          <Route path="/careers" element={<><Navbar /><Careers /><Footer /></>} />
+          <Route path="/case-studies" element={<><Navbar /><CaseStudies /><Footer /></>} />
+          <Route path="/privacy-policy" element={<><Navbar /><PrivacyPolicy /><Footer /></>} />
+          <Route path="/terms-of-service" element={<><Navbar /><TermsOfService /><Footer /></>} />
+          <Route path="/nda-template" element={<><Navbar /><NdaTemplate /><Footer /></>} />
+          
+          {/* Portal Pages (Now with Global Bot) */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/portal" element={<Portal />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }
