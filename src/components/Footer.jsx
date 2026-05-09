@@ -31,7 +31,7 @@ export default function Footer() {
             <li><Link to="/careers">Careers</Link></li>
             <li><Link to="/blog">Blog</Link></li>
             <li><Link to="/case-studies">Case Studies</Link></li>
-            <li><Link to="/login" style={{ color: 'var(--blue-bright)', fontWeight: 600 }}>Staff Login</Link></li>
+            <li><Link to="/login" style={{ color: 'var(--blue-bright)', fontWeight: 600 }}>Employee Login</Link></li>
           </ul>
         </div>
 
@@ -46,10 +46,17 @@ export default function Footer() {
       </div>
 
       <div className="footer-bottom">
-        <p>© January 2026 Varsaka. All rights reserved. Made with ❤️ in Hyderabad, India.</p>
+        <p>© January 2026 Varsaka Labs. All rights reserved. Made with ❤️ in Hyderabad, India.</p>
         <div className="social-links">
-          <a href="https://www.linkedin.com/company/varsaka-labs-llp/posts/?feedView=all" className="social-link" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer">💼</a>
-          <a href="https://www.instagram.com/varsakalabs/?hl=en" className="social-link" aria-label="Instagram" target="_blank" rel="noopener noreferrer">📷</a>
+          <a href="https://wa.me/917396106271" className="social-link" aria-label="WhatsApp" target="_blank" rel="noopener noreferrer">
+            <i className="fa-brands fa-whatsapp"></i>
+          </a>
+          <a href="https://www.linkedin.com/company/varsaka-labs-llp/posts/?feedView=all" className="social-link" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer">
+            <i className="fa-brands fa-linkedin-in"></i>
+          </a>
+          <a href="https://www.instagram.com/varsakalabs/?hl=en" className="social-link" aria-label="Instagram" target="_blank" rel="noopener noreferrer">
+            <i className="fa-brands fa-instagram"></i>
+          </a>
         </div>
       </div>
     </footer>

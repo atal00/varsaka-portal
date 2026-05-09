@@ -61,7 +61,7 @@ export default function Login() {
 
     // ROLE PROTECTION: 
     // If the user selected 'Admin' tab but their account is 'employee', block them.
-    // If the user selected 'Staff' tab but their account is 'admin', block them.
+    // If the user selected 'Employee' tab but their account is 'admin', block them.
     if (role === 'admin' && userRole !== 'admin') {
       await supabase.auth.signOut();
       setError('This account does not have Admin privileges.');
@@ -88,16 +88,26 @@ export default function Login() {
   };
 
   return (
-    <div className="login-page">
+    <div className={`login-page ${role}-mode`}>
       <div className="login-card fade-in visible">
         <div className="login-header">
-          <img src={logo} alt="Varsaka" className="login-logo" />
-          <h1>Portal Access</h1>
+          <div className="login-animation">
+            <img 
+              src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f512/512.gif" 
+              alt="🔒" 
+              className="lock-gif" 
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.insertAdjacentHTML('afterend', '<span style="font-size: 2.5rem;">🔒</span>');
+              }}
+            />
+          </div>
+          <h1>{role === 'admin' ? 'Admin' : 'Employee'} Login</h1>
           <p className="login-sub">Secure authentication for Varsaka Labs Team</p>
         </div>
 
         <div className="login-tabs">
-          <button className={role === 'employee' ? 'active' : ''} onClick={() => setRole('employee')}>Staff</button>
+          <button className={role === 'employee' ? 'active' : ''} onClick={() => setRole('employee')}>Employee</button>
           <button className={role === 'admin' ? 'active' : ''} onClick={() => setRole('admin')}>Admin</button>
         </div>
 

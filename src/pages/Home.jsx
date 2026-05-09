@@ -413,7 +413,7 @@ export default function Home() {
             <div className="section-tag">👋 Get In Touch</div>
             <h2 className="section-title">Let's Talk About Your Project!</h2>
             <p className="section-sub" style={{marginBottom:'2.5rem'}}>We're friendly people — no pressure, no sales pitch. Just an honest conversation about how we can help your team ship better software.</p>
-            {[{icon:'📧',label:'Email',val:'info@varsaka.com'},{icon:'📍',label:'Location',val:'Hyderabad, Telangana, India'},{icon:'⏰',label:'Response Time',val:'Within 4 business hours 😊'}].map(c => (
+            {[{icon:'📧',label:'Email',val:'info@varsaka.com'},{icon:'💬',label:'WhatsApp',val:<a href="https://wa.me/917396106271" style={{color:'inherit', textDecoration:'none'}}>+91 73961 06271</a>},{icon:'📍',label:'Location',val:'Hyderabad, Telangana, India'},{icon:'⏰',label:'Response Time',val:'Within 4 business hours 😊'}].map(c => (
               <div key={c.label} className="contact-info-item">
                 <div className="contact-icon">{c.icon}</div>
                 <div><div className="contact-info-label">{c.label}</div><div className="contact-info-val">{c.val}</div></div>

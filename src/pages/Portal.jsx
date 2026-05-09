@@ -73,6 +73,26 @@ export default function Portal() {
   const [staffList, setStaffList] = useState([]);
   const [inviteData, setInviteData] = useState({ email: '', name: '' });
   const [inviting, setInviting] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [infoMsg, setInfoMsg] = useState('');
+  const [infoIcon, setInfoIcon] = useState({ url: 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f6e1_fe0f/512.gif', fallback: '🛡️' });
+
+  const INFO_ICONS = [
+    { url: 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f6e1_fe0f/512.gif', fallback: '🛡️' },
+    { url: 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f512/512.gif',      fallback: '🔒' },
+    { url: 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f511/512.gif',      fallback: '🔑' },
+    { url: 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f4a1/512.gif',      fallback: '💡' },
+    { url: 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f680/512.gif',      fallback: '🚀' },
+    { url: 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f4cc/512.gif',      fallback: '📌' }
+  ];
+
+  const triggerInfo = (msg) => {
+    if (showInfoModal) return; // 🛡️ Prevent rapid-fire clicks/Enter key spam
+    setInfoMsg(msg);
+    const iconObj = INFO_ICONS[Math.floor(Math.random() * INFO_ICONS.length)];
+    setInfoIcon(iconObj);
+    setShowInfoModal(true);
+  };
 
   const [showAddLead, setShowAddLead] = useState(false);
   const [newLead, setNewLead] = useState({ 
@@ -81,6 +101,8 @@ export default function Portal() {
   const [addingLead, setAddingLead] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
   const [showCountryList, setShowCountryList] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showMobileStats, setShowMobileStats] = useState(false);
 
   // Celebration System
   const [celebration, setCelebration] = useState(null);
@@ -110,19 +132,60 @@ export default function Portal() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const s = sessionStorage.getItem('varsaka_user');
-    if (!s) {
-      navigate('/login');
-    } else {
-      const user = JSON.parse(s);
-      setSession(user);
+    const validateSession = async () => {
+      const s = sessionStorage.getItem('varsaka_user');
+      if (!s) {
+        navigate('/login');
+        return;
+      }
+
+      const sessionUser = JSON.parse(s);
+
+      // 🛡️ SECURITY FIX 1: Cryptographic Session Validation
+      // Do not trust sessionStorage blindly. Verify with Supabase backend.
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
+      if (error || !user) {
+        console.error("Auth validation failed:", error);
+        sessionStorage.removeItem('varsaka_user');
+        navigate('/login');
+        return;
+      }
+
+      // 🛡️ SECURITY FIX 2: Privilege Escalation Prevention
+      // Check if user spoofed their role in sessionStorage
+      const realRole = user.user_metadata?.role || 'employee';
+      if (sessionUser.role === 'admin' && realRole !== 'admin') {
+        console.warn("SECURITY ALERT: Privilege escalation attempt blocked.");
+        sessionStorage.removeItem('varsaka_user');
+        navigate('/login');
+        return;
+      }
+
+      setSession(sessionUser);
+      // Wait for session state to update before fetching data
+    };
+
+    validateSession();
+  }, [navigate]);
+
+  // Fetch data only after session is validated and set
+  useEffect(() => {
+    if (session) {
       fetchData();
       fetchStaff();
+      const interval = setInterval(fetchData, 60000);
+      return () => clearInterval(interval);
     }
-    // 🔄 Auto-refresh data every 60 seconds
-    const interval = setInterval(fetchData, 60000);
-    return () => clearInterval(interval);
-  }, [navigate]);
+  }, [session]);
+
+  // 🔔 Post-Login Notification
+  useEffect(() => {
+    if (session && !sessionStorage.getItem('notified_refresh')) {
+      triggerInfo('Welcome back! Kindly refresh from the top button to see the latest leads.');
+      sessionStorage.setItem('notified_refresh', 'true');
+    }
+  }, [session]);
 
   // 🧹 BACKGROUND CLEANUP: Auto-delete rejected leads after 60 mins
   useEffect(() => {
@@ -147,14 +210,29 @@ export default function Portal() {
     return () => clearInterval(timer);
   }, [data]);
 
+  // ⌨️ Modal Accessibility: Focus the button when modal opens
+  useEffect(() => {
+    if (showInfoModal) {
+      setTimeout(() => {
+        const btn = document.getElementById('btn-info-close');
+        if (btn) btn.focus();
+      }, 50);
+    }
+  }, [showInfoModal]);
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const { data: leads, error: fetchError } = await supabase
-        .from('leads')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // 🛡️ SECURITY FIX 3: Network Data Minimization
+      // Prevent data leakage over network by strictly querying only assigned leads for employees
+      let query = supabase.from('leads').select('*').order('created_at', { ascending: false });
+      
+      if (session.role === 'employee') {
+        query = query.eq('assigned_to', session.id);
+      }
+      
+      const { data: leads, error: fetchError } = await query;
       
       if (fetchError) throw fetchError;
 
@@ -174,7 +252,7 @@ export default function Portal() {
         source: l.source || 'Unknown' // 👈 Map source
       })));
 
-        // 🎊 Celebration Check (Only for Staff)
+        // 🎊 Celebration Check (Only for Employee)
       if (session.role === 'employee') {
         // 1. Check for newly approved leads
         const newlyApproved = leads.find(l => 
@@ -223,6 +301,7 @@ export default function Portal() {
 
   const handleLogout = () => {
     sessionStorage.removeItem('varsaka_user');
+    sessionStorage.removeItem('notified_refresh'); // 🔄 Clear flag on logout
     navigate('/login');
   };
 
@@ -232,14 +311,14 @@ export default function Portal() {
       .update({ assigned_to: staffId || null })
       .eq('id', leadId);
 
-    if (updateError) alert('Failed to assign task: ' + updateError.message);
-    else fetchData();
+    if (updateError) {
+      triggerInfo('Failed to assign task: ' + updateError.message);
+    } else fetchData();
   };
 
   const inviteStaff = (e) => {
     e.preventDefault();
-    alert('For security, please use the Supabase Dashboard to invite new staff.');
-    window.open('https://supabase.com/dashboard/project/hxexoazbnbtqhyytxitq/auth/users', '_blank');
+    triggerInfo('Kindly connect with your super admin to add or delete any employee.');
   };
 
   const updateStaffName = async (sid, newName) => {
@@ -249,15 +328,15 @@ export default function Portal() {
   };
 
   const removeStaff = (sid) => {
-    if (sid === session.id) return alert('You cannot delete yourself!');
-    alert('For security, please delete user accounts directly from the Supabase Dashboard.');
-    window.open('https://supabase.com/dashboard/project/hxexoazbnbtqhyytxitq/auth/users', '_blank');
+    if (sid === session.id) return triggerInfo('You cannot delete yourself!');
+    triggerInfo('Kindly connect with your super admin to add or delete any employee.');
   };
 
   const updateStatus = async (id, val) => {
     const { error: updateError } = await supabase.from('leads').update({ status: val }).eq('id', id);
-    if (updateError) alert('Failed to update status: ' + updateError.message);
-    else fetchData();
+    if (updateError) {
+      triggerInfo('Failed to update status: ' + updateError.message);
+    } else fetchData();
   };
 
   const updateNoteLocally = (id, text) => {
@@ -284,7 +363,7 @@ export default function Portal() {
     const { error: deleteError } = await supabase.from('leads').delete().eq('id', id);
     
     if (deleteError) {
-      alert('Failed to delete from DB: ' + deleteError.message);
+      triggerInfo('Failed to delete from DB: ' + deleteError.message);
     } else {
       // --- GOOGLE SHEET SYNC (DELETE) ---
       const gsUrl = import.meta.env.VITE_GS_SYNC_URL;
@@ -302,7 +381,9 @@ export default function Portal() {
 
   const addLead = async (e) => {
     e.preventDefault();
-    if (!newLead.name || !newLead.email) return alert('Please enter Name and Email');
+    if (!newLead.name || !newLead.email) {
+      return triggerInfo('Please enter Name and Email');
+    }
     
     setAddingLead(true);
     try {
@@ -315,15 +396,15 @@ export default function Portal() {
         message: newLead.msg,
         status: isStaff ? 'approval_pending' : 'new',
         assigned_to: isStaff ? session.id : null,
-        source: session.name || 'Direct Admin' // 👤 Staff/Admin Tag
+        source: session.name || 'Direct Admin' // 👤 Employee/Admin Tag
       }]);
 
       if (insError) throw insError;
 
-      alert(isStaff ? 'Lead submitted for Admin approval!' : 'Lead added successfully!');
+      triggerInfo(isStaff ? 'Lead submitted for Admin approval!' : 'Lead added successfully!');
       
       // 🛡️ GATED APPROVAL: Only sync to GS if Admin is adding it directly.
-      // Staff leads wait for Admin Approval.
+      // Employee leads wait for Admin Approval.
       const gsUrl = import.meta.env.VITE_GS_SYNC_URL;
       if (!isStaff && gsUrl) {
         fetch(gsUrl, {
@@ -341,7 +422,7 @@ export default function Portal() {
       setShowAddLead(false);
       fetchData();
     } catch (err) {
-      alert('Error: ' + err.message);
+      triggerInfo('Error: ' + err.message);
     }
     setAddingLead(false);
   };
@@ -370,7 +451,9 @@ export default function Portal() {
   };
 
   const exportToCSV = () => {
-    if (data.length === 0) return alert('No data to export!');
+    if (data.length === 0) {
+      return triggerInfo('No data to export!');
+    }
     
     const headers = ['Time', 'Client Name', 'Email', 'Phone', 'Service', 'Message', 'Status', 'Notes'];
     const rows = data.map(r => [
@@ -434,26 +517,33 @@ export default function Portal() {
     <div className="portal-page">
       <header className="portal-header">
         <div className="portal-brand">
-          <img src={logo} className="portal-logo" alt="Varsaka" />
-          <h1>Varsaka</h1>
-          <span className={`role-badge ${session.role}`}>{session.role}</span>
+          <div className="brand-logo-stack" onClick={() => navigate('/')} style={{cursor: 'pointer'}}>
+            <img src={logo} className="portal-logo" alt="Varsaka Labs" />
+            <h1>Varsaka Labs</h1>
+          </div>
         </div>
-        <div className="portal-user-center">Logged in as <strong>{session.name}</strong></div>
-        <div className="portal-actions">
-          <button className="btn-settings" style={{background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe'}} onClick={() => setShowAddLead(!showAddLead)}>
+        <span className={`role-badge ${session.role} header-center`}>{session.name}</span>
+        <div className="portal-mobile-toggle">
+          <button className="btn-hamburger" onClick={() => setShowMobileMenu(!showMobileMenu)}>
+            {showMobileMenu ? '✕' : '☰'}
+          </button>
+        </div>
+
+        <div className={`portal-actions ${showMobileMenu ? 'mobile-open' : ''}`}>
+          <button className="btn-settings" style={{background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe'}} onClick={() => { setShowAddLead(!showAddLead); setShowMobileMenu(false); }}>
             {showAddLead ? '✕ Close' : '➕ Add Lead'}
           </button>
           {session.role === 'admin' && (
-            <button className="btn-settings" onClick={() => setShowTeam(!showTeam)}>
+            <button className="btn-settings" onClick={() => { setShowTeam(!showTeam); setShowMobileMenu(false); }}>
               {showTeam ? '📋 Show Leads' : '👥 Team Workload'}
             </button>
           )}
           {session.role === 'admin' && (
-            <button className="btn-refresh" onClick={exportToCSV} style={{background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0'}}>
+            <button className="btn-refresh" onClick={() => { exportToCSV(); setShowMobileMenu(false); }} style={{background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0'}}>
               📥 Export Data
             </button>
           )}
-          <button className="btn-refresh" onClick={fetchData} disabled={loading}>↻ {loading ? '...' : 'Refresh'}</button>
+          <button className="btn-refresh" onClick={() => { fetchData(); setShowMobileMenu(false); }} disabled={loading}>↻ {loading ? '...' : 'Refresh'}</button>
           <button className="btn-logout" onClick={handleLogout}>Logout</button>
         </div>
       </header>
@@ -579,20 +669,32 @@ export default function Portal() {
                 );
               })}
             </div>
-            <div className="add-staff-form" style={{ marginTop: '2rem', borderTop: '1px solid #eee', paddingTop: '1.5rem' }}>
-              <h4>Invite New Team Member</h4>
-              <form className="settings-row" onSubmit={inviteStaff}>
-                <input type="email" placeholder="Staff Email Address" />
-                <input type="text" placeholder="Full Name" />
-                <button type="submit" className="btn-save">Send Invite →</button>
-              </form>
+            <div className="add-staff-form" style={{ marginTop: '2rem', borderTop: '1px solid #eee', paddingTop: '1.5rem', textAlign: 'center' }}>
+              <p style={{ color: '#64748b', fontWeight: '600', fontStyle: 'italic' }}>
+                💡 To add a new employee, kindly connect with your super admin.
+              </p>
             </div>
           </div>
         )}
 
-        <div className="stats-bar">
+        <div className="mobile-stats-toggle">
+          <button className="btn-stats-toggle" onClick={() => setShowMobileStats(!showMobileStats)}>
+            {showMobileStats ? '📊 Hide Analytics' : '📊 View Analytics'}
+          </button>
+        </div>
+
+        <div className={`stats-bar ${showMobileStats ? 'stats-open' : ''}`}>
           <div className="stat-box">
-            <span><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4ca/512.gif" width="24" style={{verticalAlign:'middle', marginRight:'8px'}} /> Total</span>
+            <span>
+              <img 
+                src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4ca/512.gif" 
+                width="24" 
+                style={{verticalAlign:'middle', marginRight:'8px'}} 
+                alt="📊"
+                onError={(e) => { e.target.style.display = 'none'; e.target.insertAdjacentHTML('afterend', '📊 '); }}
+              /> 
+              Total
+            </span>
             <strong>{stats.total}</strong>
           </div>
           {session.role === 'admin' && stats.needsReview > 0 && (
@@ -602,15 +704,42 @@ export default function Portal() {
             </div>
           )}
           <div className="stat-box new">
-            <span><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/23f3/512.gif" width="24" style={{verticalAlign:'middle', marginRight:'8px'}} /> Pending</span>
+            <span>
+              <img 
+                src="https://fonts.gstatic.com/s/e/notoemoji/latest/23f3/512.gif" 
+                width="24" 
+                style={{verticalAlign:'middle', marginRight:'8px'}} 
+                alt="⏳"
+                onError={(e) => { e.target.style.display = 'none'; e.target.insertAdjacentHTML('afterend', '⏳ '); }}
+              /> 
+              Pending
+            </span>
             <strong>{stats.new}</strong>
           </div>
           <div className="stat-box ongoing">
-            <span><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/2699_fe0f/512.gif" width="24" style={{verticalAlign:'middle', marginRight:'8px'}} /> Ongoing</span>
+            <span>
+              <img 
+                src="https://fonts.gstatic.com/s/e/notoemoji/latest/2699_fe0f/512.gif" 
+                width="24" 
+                style={{verticalAlign:'middle', marginRight:'8px'}} 
+                alt="⚙️"
+                onError={(e) => { e.target.style.display = 'none'; e.target.insertAdjacentHTML('afterend', '⚙️ '); }}
+              /> 
+              Ongoing
+            </span>
             <strong>{stats.ongoing}</strong>
           </div>
           <div className="stat-box done">
-            <span><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/2705/512.gif" width="24" style={{verticalAlign:'middle', marginRight:'8px'}} /> Completed</span>
+            <span>
+              <img 
+                src="https://fonts.gstatic.com/s/e/notoemoji/latest/2705/512.gif" 
+                width="24" 
+                style={{verticalAlign:'middle', marginRight:'8px'}} 
+                alt="✅"
+                onError={(e) => { e.target.style.display = 'none'; e.target.insertAdjacentHTML('afterend', '✅ '); }}
+              /> 
+              Completed
+            </span>
             <strong>{stats.completed}</strong>
           </div>
         </div>
@@ -738,7 +867,7 @@ export default function Portal() {
             </div>
             <div className="modal-body">
               <p style={{fontSize: '0.9rem', color: '#64748b', marginBottom: '10px'}}>
-                Please provide a clear reason for rejecting this lead. This will be visible to the staff member.
+                Please provide a clear reason for rejecting this lead. This will be visible to the employee.
               </p>
               <textarea 
                 value={rejectReason} 
@@ -790,6 +919,44 @@ export default function Portal() {
             <div className="modal-footer">
               <button className="btn-cancel" onClick={() => setShowDeleteModal(false)}>Cancel</button>
               <button className="btn-confirm-reject" onClick={confirmDelete}>Permanently Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showInfoModal && (
+        <div className="custom-modal-overlay">
+          <div className="custom-modal-box info-modal-box">
+            <div className="modal-header">
+              <h3>Notice</h3>
+              <button className="close-x" onClick={() => setShowInfoModal(false)}>✕</button>
+            </div>
+            <div className="modal-body center-content">
+              <div className="info-icon-wrap">
+                <img 
+                  src={infoIcon.url} 
+                  alt={infoIcon.fallback} 
+                  className="info-live-gif" 
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'block';
+                  }}
+                />
+                <span className="fallback-emoji" style={{display: 'none', fontSize: '3rem'}}>{infoIcon.fallback}</span>
+              </div>
+              <p className="info-text-large">
+                {infoMsg}
+              </p>
+            </div>
+            <div className="modal-footer" style={{justifyContent: 'center'}}>
+              <button 
+                id="btn-info-close"
+                className="btn-save" 
+                onClick={() => setShowInfoModal(false)} 
+                style={{padding: '0.9rem 3rem', borderRadius: '100px'}}
+              >
+                Got it
+              </button>
             </div>
           </div>
         </div>
