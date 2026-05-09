@@ -75,14 +75,13 @@ export default function App() {
     <BrowserRouter>
       <AnimationTrigger />
       
-      {/* Global Bot & Scroll Trigger */}
-      <Chatbot />
+      {/* Global Scroll Trigger */}
       <ScrollTop />
 
       <Suspense fallback={<div style={{height: '100vh', background: 'var(--bg-white)'}} />}>
         <Routes>
           {/* Public Pages with Nav/Footer */}
-          <Route path="/" element={<><Navbar /><Home /><Footer /></>} />
+          <Route path="/" element={<><Navbar /><Home /><Chatbot /><Footer /></>} />
           <Route path="/about" element={<><Navbar /><About /><Footer /></>} />
           <Route path="/blog" element={<><Navbar /><Blog /><Footer /></>} />
           <Route path="/careers" element={<><Navbar /><Careers /><Footer /></>} />
@@ -91,7 +90,7 @@ export default function App() {
           <Route path="/terms-of-service" element={<><Navbar /><TermsOfService /><Footer /></>} />
           <Route path="/nda-template" element={<><Navbar /><NdaTemplate /><Footer /></>} />
           
-          {/* Portal Pages (Now with Global Bot) */}
+          {/* Portal Pages */}
           <Route path="/login" element={<Login />} />
           <Route path="/portal" element={<Portal />} />
         </Routes>
