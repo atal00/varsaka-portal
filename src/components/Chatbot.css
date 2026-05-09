@@ -103,7 +103,37 @@
   100% { left: 150%; }
 }
 
+.chatbot-tooltip {
+  position: fixed;
+  bottom: 105px;
+  left: 30px;
+  z-index: 998;
+  background: white;
+  padding: 0.75rem 1.2rem;
+  border-radius: 100px;
+  border-bottom-left-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e293b;
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.15);
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  transition: all 0.3s;
+}
+.chatbot-tooltip:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.2);
+  border-color: #2563eb;
+}
+
+@keyframes bounceIn {
+  0% { opacity: 0; transform: translateY(20px) scale(0.9); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 @media(max-width: 480px) {
   .chatbot-toggler { bottom: 20px; left: 20px; width: 56px; height: 56px; }
+  .chatbot-tooltip { bottom: 85px; left: 20px; font-size: 0.8rem; padding: 0.6rem 1rem; }
   .chatbot-window { width: calc(100vw - 32px); left: 16px; bottom: 90px; max-height: 75vh; }
 }

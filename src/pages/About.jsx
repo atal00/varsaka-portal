@@ -10,10 +10,10 @@ export default function About() {
         <p className="meta">Headquartered in Hyderabad, India · Serving clients globally</p>
 
         <h2>Who We Are</h2>
-        <p>Varsaka Labs is a progressive technology firm with deep expertise in Software Testing, Quality Engineering, and End-to-End Development Solutions. Founded by a team of passionate engineers, we exist to make software better — one test at a time.</p>
+        <p>Varsaka Labs is a progressive technology firm with deep expertise in Software Testing, Quality Engineering, and End-to-End Development Solutions. Founded by a team of passionate engineers, we exist to make software better - one test at a time.</p>
 
         <h2>Our Mission</h2>
-        <p>To be the most trusted QA partner for technology teams across India and beyond — delivering honest, thorough, and friendly quality engineering that helps products ship with confidence.</p>
+        <p>To be the most trusted QA partner for technology teams across India and beyond - delivering honest, thorough, and friendly quality engineering that helps products ship with confidence.</p>
 
         <h2>What We Do</h2>
         <p>We cover the full spectrum of software quality:</p>
@@ -28,7 +28,7 @@ export default function About() {
 
         <h2>Our Values</h2>
         <p><strong>Transparency:</strong> You always know what we're testing, why, and what we found. No jargon, no mystery.</p>
-        <p><strong>Partnership:</strong> We think of ourselves as an extension of your team — not a vendor.</p>
+        <p><strong>Partnership:</strong> We think of ourselves as an extension of your team - not a vendor.</p>
         <p><strong>Speed with Quality:</strong> Fast doesn't mean careless. We're known for rapid onboarding without ever cutting corners.</p>
 
         <h2>Get In Touch</h2>

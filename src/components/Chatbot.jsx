@@ -17,7 +17,7 @@ const KNOWLEDGE_BASE = [
   { keywords: ['tool', 'tech', 'stack', 'framework'], reply: "We work with modern tools like Selenium, Playwright, Cypress, JMeter, Appium, and Jenkins. We also build custom AI testing frameworks for our enterprise clients." },
   { keywords: ['time', 'duration', 'start', 'how long'], reply: "We can typically onboard a team and start testing within 3-5 business days of the initial discovery call." },
   { keywords: ['careers', 'job', 'hiring', 'work at'], reply: "We are always looking for passionate QA engineers! Check out our Careers page or send your CV to careers@varsaka.com." },
-  { keywords: ['about', 'company', 'varsaka', 'who is', 'background'], reply: "At Varsaka Labs, we don't just 'find bugs'—we solve the release-day anxiety that keeps CTOs up at night. 🌙 We noticed too many teams were slowing down due to manual bottlenecks or unstable automation, so we built a partnership-first model. We step into your workflow to ensure your software is resilient, your CI/CD is fast, and your users have a zero-glitch experience." },
+  { keywords: ['about', 'company', 'varsaka', 'who is', 'background'], reply: "At Varsaka Labs, we don't just 'find bugs'-we solve the release-day anxiety that keeps CTOs up at night. 🌙 We noticed too many teams were slowing down due to manual bottlenecks or unstable automation, so we built a partnership-first model. We step into your workflow to ensure your software is resilient, your CI/CD is fast, and your users have a zero-glitch experience." },
   { keywords: ['who are you', 'your name', 'what are you'], reply: "I'm the Varsaka AI Assistant! I'm here to provide information about our services and help you connect with our human experts." },
   { keywords: ['human', 'person', 'real agent', 'speak to'], reply: "I can definitely get a human to help you! Would you like to leave your email so one of our consultants can reach out?" },
   { keywords: ['mobile', 'app', 'android', 'ios'], reply: "Yes! We offer extensive Mobile App Testing for both iOS and Android, including automation with Appium and real-device testing." },
@@ -147,7 +147,7 @@ export default function Chatbot() {
         }).catch(err => console.error('GS Bot Sync Error:', err));
       }
 
-      botReply(res.ok ? '✅ All set! A Varsaka expert will reach out to you within 4 hours. Anything else I can help with?' : '❌ I had a slight connection issue, but don\'t worry—I\'ve logged your request.');
+      botReply(res.ok ? '✅ All set! A Varsaka expert will reach out to you within 4 hours. Anything else I can help with?' : '❌ I had a slight connection issue, but don\'t worry-I\'ve logged your request.');
       setTimeout(() => setShowOptions(true), 2000);
     } catch (err) {
       console.error('Chatbot Error:', err);
@@ -161,6 +161,19 @@ export default function Chatbot() {
     setInput('');
     setShowOptions(false);
     addMsg(text, 'user');
+
+    // 🕵️ AUTO-LEAD DETECTION (Frictionless Conversion)
+    // Automatically detect if the user provided an email or phone number
+    const hasEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(text);
+    const hasPhone = /\b(?:\+?\d{1,3}[- ]?)?\(?\d{3}\)?[- ]?\d{3}[- ]?\d{4}\b/.test(text) || /\b\d{10}\b/.test(text);
+
+    if (hasEmail || hasPhone) {
+      setSending(true);
+      botReply('I see you provided contact information! 🚀 Sending this directly to our experts now...');
+      await finalizeLead(text);
+      setSending(false);
+      return;
+    }
 
     if (isVerifyingHuman) {
       if (parseInt(text) === (verificationMath.a + verificationMath.b)) {
@@ -218,6 +231,11 @@ export default function Chatbot() {
 
   return (
     <>
+      {!open && (
+        <div className="chatbot-tooltip" onClick={() => setOpen(true)}>
+          🚀 Ship without bugs! 🛡️ Talk to our experts. 💬✨
+        </div>
+      )}
       <button className="chatbot-toggler" aria-label="Open Chat" onClick={() => setOpen(o => !o)}>
         {open ? (
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

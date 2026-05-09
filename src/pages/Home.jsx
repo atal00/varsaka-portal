@@ -235,7 +235,7 @@ export default function Home() {
         <div className="hero-dots" />
         <div className="hero-badge"><div className="badge-dot" />🏆 India's Trusted QA Partner</div>
         <h1>Varsaka Labs <span className="h1-blue h1-underline">Precision</span> in Testing<br />Excellence in Development</h1>
-        <p className="hero-sub">Varsaka Labs delivers friendly, thorough software testing — functional, automation, performance, security and AI-powered — so your team ships with total confidence.</p>
+        <p className="hero-sub">Varsaka Labs delivers friendly, thorough software testing - functional, automation, performance, security and AI-powered - so your team ships with total confidence.</p>
         <div className="hero-btns">
           <a href="#contact" className="btn-primary">Start Free Consultation 🚀</a>
           <a href="#services" className="btn-ghost">See All Services ↓</a>
@@ -270,16 +270,16 @@ export default function Home() {
         <div className="section-head fade-in">
           <div className="section-tag">✨ Our Services</div>
           <h2 className="section-title">Everything Your Software Needs to Succeed</h2>
-          <p className="section-sub">From manual checks to AI-driven automation — we cover every layer of your application with care and precision.</p>
+          <p className="section-sub">From manual checks to AI-driven automation - we cover every layer of your application with care and precision.</p>
         </div>
         <div className="services-grid">
           {[
-            {icon:'🧪',title:'Functional Testing',desc:'We verify every feature works exactly as your users expect — across browsers, devices, and all those sneaky edge cases.',pill:'Manual & Scripted'},
-            {icon:'🤖',title:'Automation Testing',desc:'Build it once, run it forever. We design solid automation frameworks with Selenium, Playwright and Cypress — cutting your regression time by up to 80%.',pill:'Selenium · Cypress · Playwright'},
-            {icon:'⚡',title:'Performance Testing',desc:'We simulate thousands of users hitting your app at once — finding bottlenecks before they find your customers.',pill:'JMeter · k6 · Gatling'},
+            {icon:'🧪',title:'Functional Testing',desc:'We verify every feature works exactly as your users expect - across browsers, devices, and all those sneaky edge cases.',pill:'Manual & Scripted'},
+            {icon:'🤖',title:'Automation Testing',desc:'Build it once, run it forever. We design solid automation frameworks with Selenium, Playwright and Cypress - cutting your regression time by up to 80%.',pill:'Selenium · Cypress · Playwright'},
+            {icon:'⚡',title:'Performance Testing',desc:'We simulate thousands of users hitting your app at once - finding bottlenecks before they find your customers.',pill:'JMeter · k6 · Gatling'},
             {icon:'🔐',title:'Security Testing',desc:'Your users trust you with their data. We run penetration tests, OWASP audits and vulnerability assessments so that trust is never broken.',pill:'OWASP · VAPT · Pen Testing'},
             {icon:'🧠',title:'AI-Powered Testing',desc:'We use machine learning to auto-generate smart test cases, detect anomalies early, and keep test scripts self-healing.',pill:'ML · Smart Automation · AI QA'},
-            {icon:'📱',title:'Mobile Testing',desc:'Native, hybrid or cross-platform — we test on 100+ real devices. iOS and Android, every screen size, pixel-perfect quality guaranteed.',pill:'iOS · Android · Cross-Platform'},
+            {icon:'📱',title:'Mobile Testing',desc:'Native, hybrid or cross-platform - we test on 100+ real devices. iOS and Android, every screen size, pixel-perfect quality guaranteed.',pill:'iOS · Android · Cross-Platform'},
           ].map(s => (
             <div key={s.title} className="svc-card fade-in">
               <div className="svc-icon">{s.icon}</div>
@@ -311,9 +311,9 @@ export default function Home() {
         <div className="process-grid">
           {[
             {n:'01',icon:'🔍',title:'Discovery & Planning',desc:'We sit down with you, understand your app, and define a tailored testing strategy that fits your goals, tech stack, and timeline perfectly.'},
-            {n:'02',icon:'📋',title:'Test Design',desc:'Our team writes clear test cases and builds automation frameworks — everything documented so you always know exactly what\'s being tested and why.'},
-            {n:'03',icon:'🚀',title:'Execution & Reporting',desc:'We run tests, catch bugs early, and share live dashboards with plain-English insights. No confusing reports — just clear, actionable information.'},
-            {n:'04',icon:'✅',title:'Sign-off & Support',desc:'Quality confirmed, final report delivered — and we stick around after go-live too. We\'re your long-term quality partner, not just a one-time vendor.'},
+            {n:'02',icon:'📋',title:'Test Design',desc:'Our team writes clear test cases and builds automation frameworks - everything documented so you always know exactly what\'s being tested and why.'},
+            {n:'03',icon:'🚀',title:'Execution & Reporting',desc:'We run tests, catch bugs early, and share live dashboards with plain-English insights. No confusing reports - just clear, actionable information.'},
+            {n:'04',icon:'✅',title:'Sign-off & Support',desc:'Quality confirmed, final report delivered - and we stick around after go-live too. We\'re your long-term quality partner, not just a one-time vendor.'},
           ].map(p => (
             <div key={p.n} className="process-card fade-in">
               <div className="process-num">{p.n}</div>
@@ -330,16 +330,16 @@ export default function Home() {
         <div className="section-head fade-in">
           <div className="section-tag">💙 Why Varsaka Labs</div>
           <h2 className="section-title">Quality You Trust, People You'll Love Working With</h2>
-          <p className="section-sub">We're not just testers — we're friendly partners who genuinely care about your product's success.</p>
+          <p className="section-sub">We're not just testers - we're friendly partners who genuinely care about your product's success.</p>
         </div>
         <div className="why-grid">
           {[
-            {icon:'⚡',title:'Fast Turnaround',desc:'Quick onboarding and accelerated cycles — ship faster without ever cutting corners on quality.'},
+            {icon:'⚡',title:'Fast Turnaround',desc:'Quick onboarding and accelerated cycles - ship faster without ever cutting corners on quality.'},
             {icon:'🎯',title:'Domain Expertise',desc:'Deep experience in fintech, healthcare, ecommerce, SaaS, and enterprise applications.'},
-            {icon:'🔄',title:'CI/CD Ready',desc:'Seamless fit into your DevOps pipeline — automated tests trigger on every single commit.'},
-            {icon:'📊',title:'Live Dashboards',desc:'Real-time test progress and bug tracking — complete visibility with zero mystery.'},
+            {icon:'🔄',title:'CI/CD Ready',desc:'Seamless fit into your DevOps pipeline - automated tests trigger on every single commit.'},
+            {icon:'📊',title:'Live Dashboards',desc:'Real-time test progress and bug tracking - complete visibility with zero mystery.'},
             {icon:'🔒',title:'NDA & Data Safe',desc:'Your IP is protected with strict NDAs, secure environments, and ISO-aligned processes.'},
-            {icon:'💰',title:'Honest Pricing',desc:'Enterprise quality at startup-friendly rates. Flexible project or retainer — no surprise bills.'},
+            {icon:'💰',title:'Honest Pricing',desc:'Enterprise quality at startup-friendly rates. Flexible project or retainer - no surprise bills.'},
           ].map(w => (
             <div key={w.title} className="why-card fade-in">
               <div className="why-icon">{w.icon}</div>
@@ -354,12 +354,12 @@ export default function Home() {
         <div className="section-head center fade-in">
           <div className="section-tag">💬 Client Stories</div>
           <h2 className="section-title">Teams Love Working with Varsaka Labs</h2>
-          <p className="section-sub">Don't just take our word for it — here's what our happy clients have to say.</p>
+          <p className="section-sub">Don't just take our word for it - here's what our happy clients have to say.</p>
         </div>
         <div className="testi-grid">
           {[
-            {stars:'★★★★★',text:'"Varsaka found critical security vulnerabilities before our product launch. Their attention to detail literally saved us. Super friendly team — felt like working with colleagues, not contractors!"',name:'Rahul Sharma',role:'CTO, Ourfab Technologies',bg:'#2563eb',init:'RS'},
-            {stars:'★★★★★',text:'"Our regression went from 2 days to 4 hours after Varsaka\'s automation suite. ROI was visible in the first sprint. They explained everything clearly — zero jargon, 100% transparent."',name:'Priya Kapoor',role:'VP Engineering, Techtd',bg:'#1d4ed8',init:'PK'},
+            {stars:'★★★★★',text:'"Varsaka found critical security vulnerabilities before our product launch. Their attention to detail literally saved us. Super friendly team - felt like working with colleagues, not contractors!"',name:'Rahul Sharma',role:'CTO, Ourfab Technologies',bg:'#2563eb',init:'RS'},
+            {stars:'★★★★★',text:'"Our regression went from 2 days to 4 hours after Varsaka\'s automation suite. ROI was visible in the first sprint. They explained everything clearly - zero jargon, 100% transparent."',name:'Priya Kapoor',role:'VP Engineering, Techtd',bg:'#1d4ed8',init:'PK'},
             {stars:'★★★★★',text:'"Their AI testing caught edge cases we\'d missed for months! Warm, communicative and genuinely invested in our success. Would recommend Varsaka to anyone building serious software."',name:'Arjun Mehta',role:'Product Lead, TakeCare360',bg:'#3b82f6',init:'AM'},
           ].map(t => (
             <div key={t.name} className="testi-card fade-in">
@@ -399,7 +399,7 @@ export default function Home() {
       {/* CTA BANNER */}
       <div className="cta-banner">
         <h2>Ready to Ship with Total Confidence? 🚀</h2>
-        <p>Book a free, no-pressure 30-minute chat. We'll review your app and suggest the best approach — completely free, no strings attached.</p>
+        <p>Book a free, no-pressure 30-minute chat. We'll review your app and suggest the best approach - completely free, no strings attached.</p>
         <div className="cta-btns">
           <a href="#contact" className="btn-white">Get Free Consultation</a>
           <a href="#services" className="btn-outline-white">Explore Services</a>
@@ -412,7 +412,7 @@ export default function Home() {
           <div className="fade-in">
             <div className="section-tag">👋 Get In Touch</div>
             <h2 className="section-title">Let's Talk About Your Project!</h2>
-            <p className="section-sub" style={{marginBottom:'2.5rem'}}>We're friendly people — no pressure, no sales pitch. Just an honest conversation about how we can help your team ship better software.</p>
+            <p className="section-sub" style={{marginBottom:'2.5rem'}}>We're friendly people - no pressure, no sales pitch. Just an honest conversation about how we can help your team ship better software.</p>
             {[{icon:'📧',label:'Email',val:'info@varsaka.com'},{icon:'💬',label:'WhatsApp',val:<a href="https://wa.me/917396106271" style={{color:'inherit', textDecoration:'none'}}>+91 73961 06271</a>},{icon:'📍',label:'Location',val:'Hyderabad, Telangana, India'},{icon:'⏰',label:'Response Time',val:'Within 4 business hours 😊'}].map(c => (
               <div key={c.label} className="contact-info-item">
                 <div className="contact-icon">{c.icon}</div>

@@ -12,7 +12,34 @@ export default function Login() {
   const [showPass, setShowPass] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
+  const [captchaEmojiTarget, setCaptchaEmojiTarget] = useState(null);
+  const [captchaEmojiSelected, setCaptchaEmojiSelected] = useState(null);
+  const [captchaEmojiGrid, setCaptchaEmojiGrid] = useState([]);
   const navigate = useNavigate();
+
+  const EMOJI_DB = [
+    { icon: '🚗', name: 'Car' },
+    { icon: '🍎', name: 'Apple' },
+    { icon: '🐱', name: 'Cat' },
+    { icon: '🔒', name: 'Lock' },
+    { icon: '✈️', name: 'Airplane' },
+    { icon: '⚽', name: 'Soccer Ball' },
+    { icon: '🎸', name: 'Guitar' },
+    { icon: '🚀', name: 'Rocket' }
+  ];
+
+  const generateCaptcha = () => {
+    const shuffled = [...EMOJI_DB].sort(() => 0.5 - Math.random());
+    const selectedGrid = shuffled.slice(0, 4);
+    setCaptchaEmojiGrid(selectedGrid);
+    setCaptchaEmojiTarget(selectedGrid[Math.floor(Math.random() * 4)]);
+    setCaptchaEmojiSelected(null);
+  };
+
+  useEffect(() => {
+    generateCaptcha();
+    setError(''); // Clear any errors when switching tabs
+  }, [role]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -37,6 +64,14 @@ export default function Login() {
     if (isLocked) return;
     setError('');
 
+    // 🛡️ SECURITY FIX 4: Image CAPTCHA Verification
+    if (!captchaEmojiTarget || captchaEmojiSelected !== captchaEmojiTarget.name) {
+      setError('Incorrect image selected. Please try again.');
+      generateCaptcha();
+      setAttempts(prev => prev + 1);
+      return;
+    }
+
     // In Supabase, we use email for login. 
     // If the user enters 'atal', we can assume 'atal@varsaka.com' or just require email.
     // For now, let's assume they enter their email.
@@ -50,6 +85,7 @@ export default function Login() {
     if (authError) {
       setError(authError.message);
       setAttempts(prev => prev + 1);
+      generateCaptcha();
       return;
     }
 
@@ -146,6 +182,32 @@ export default function Login() {
               </button>
             </div>
           </div>
+          <div className="login-group">
+            <label>Security Check: Select the {captchaEmojiTarget?.name}</label>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
+              {captchaEmojiGrid.map(item => (
+                <div 
+                  key={item.name} 
+                  onClick={() => setCaptchaEmojiSelected(item.name)}
+                  style={{ 
+                    fontSize: '1.8rem', 
+                    flex: 1,
+                    textAlign: 'center',
+                    padding: '8px', 
+                    border: captchaEmojiSelected === item.name ? '2px solid #2563eb' : '2px solid #e2e8f0',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    background: captchaEmojiSelected === item.name ? '#eff6ff' : '#f8fafc',
+                    transition: 'all 0.2s',
+                    userSelect: 'none'
+                  }}
+                >
+                  {item.icon}
+                </div>
+              ))}
+            </div>
+          </div>
+          
           <button type="submit" className="login-btn" disabled={isLocked}>
             {isLocked ? 'Access Locked' : 'Secure Login →'}
           </button>

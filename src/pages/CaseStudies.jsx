@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 const studies = [
-  { client: 'Ourfab Technologies', tag: 'Security Testing', outcome: '12 Critical Vulnerabilities Fixed Before Launch', desc: 'Conducted a full OWASP security audit and penetration test on their fintech platform. Identified and helped remediate 12 critical and 34 medium-risk vulnerabilities — all before go-live.' },
+  { client: 'Ourfab Technologies', tag: 'Security Testing', outcome: '12 Critical Vulnerabilities Fixed Before Launch', desc: 'Conducted a full OWASP security audit and penetration test on their fintech platform. Identified and helped remediate 12 critical and 34 medium-risk vulnerabilities - all before go-live.' },
   { client: 'Techtd Platform', tag: 'Automation', outcome: '2-Day Regression Cut to 4 Hours', desc: 'Designed and implemented a full Cypress automation suite integrated with GitHub Actions. Regression cycle reduced by 83%, freeing up the team for feature work.' },
   { client: 'TakeCare360', tag: 'AI-Powered Testing', outcome: '97% Test Coverage Achieved', desc: 'Used AI-assisted test generation to expand test coverage from 61% to 97% across their healthcare SaaS platform, catching 8 previously unknown edge-case defects.' },
   { client: 'RetailEdge India', tag: 'Performance Testing', outcome: 'App Handles 10x Traffic Load', desc: 'Ran JMeter and k6 load tests simulating peak-season traffic. Identified 3 bottlenecks in their checkout flow, remediation of which increased throughput by 10x.' },
