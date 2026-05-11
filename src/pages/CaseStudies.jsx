@@ -1,33 +1,84 @@
 import { useEffect } from 'react';
+import './CaseStudies.css';
 
 const studies = [
-  { client: 'Ourfab Technologies', tag: 'Security Testing', outcome: '12 Critical Vulnerabilities Fixed Before Launch', desc: 'Conducted a full OWASP security audit and penetration test on their fintech platform. Identified and helped remediate 12 critical and 34 medium-risk vulnerabilities - all before go-live.' },
-  { client: 'Techtd Platform', tag: 'Automation', outcome: '2-Day Regression Cut to 4 Hours', desc: 'Designed and implemented a full Cypress automation suite integrated with GitHub Actions. Regression cycle reduced by 83%, freeing up the team for feature work.' },
-  { client: 'TakeCare360', tag: 'AI-Powered Testing', outcome: '97% Test Coverage Achieved', desc: 'Used AI-assisted test generation to expand test coverage from 61% to 97% across their healthcare SaaS platform, catching 8 previously unknown edge-case defects.' },
-  { client: 'RetailEdge India', tag: 'Performance Testing', outcome: 'App Handles 10x Traffic Load', desc: 'Ran JMeter and k6 load tests simulating peak-season traffic. Identified 3 bottlenecks in their checkout flow, remediation of which increased throughput by 10x.' },
+  { 
+    client: 'Ourfab Technologies', 
+    tag: 'Security Testing', 
+    icon: 'fa-shield-halved',
+    outcome: 'Critical Security Risks Remediated Post-Audit', 
+    desc: 'Conducted a comprehensive OWASP security audit on their fintech platform. Identified and helped the engineering team remediate several critical vulnerabilities before the public production release.' 
+  },
+  { 
+    client: 'Techtd Platform', 
+    tag: 'Automation', 
+    icon: 'fa-bolt-lightning',
+    outcome: 'Regression Testing Time Significantly Optimized', 
+    desc: 'Developed a custom Cypress automation framework integrated with their CI/CD pipeline. Successfully reduced the manual regression effort, allowing faster feedback for developers.' 
+  },
+  { 
+    client: 'TakeCare360', 
+    tag: 'AI-Powered Testing', 
+    icon: 'fa-robot',
+    outcome: 'Test Coverage Expanded to 85%+', 
+    desc: 'Implemented AI-assisted test generation to bridge existing coverage gaps. Successfully expanded the automated test suite to cover critical edge cases in their healthcare platform.' 
+  },
+  { 
+    client: 'RetailEdge India', 
+    tag: 'Performance Testing', 
+    icon: 'fa-gauge-high',
+    outcome: 'System Reliability Improved Under Load', 
+    desc: 'Performed targeted load and stress testing using JMeter. Identified performance bottlenecks in the checkout flow, leading to infrastructure optimizations for peak traffic periods.' 
+  },
 ];
 
 export default function CaseStudies() {
-  useEffect(() => { window.scrollTo(0, 0); }, []);
+  useEffect(() => { 
+    window.scrollTo(0, 0); 
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach((e, i) => {
+        if (e.isIntersecting) {
+          setTimeout(() => e.target.classList.add('visible'), i * 80);
+          obs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
+    return () => obs.disconnect();
+  }, []);
+
   return (
-    <div className="page-wrapper">
-      <section className="bg-white" style={{ paddingTop: 80 }}>
-        <div className="section-head fade-in">
-          <div className="section-tag">📊 Case Studies</div>
-          <h2 className="section-title">Real Results for Real Clients</h2>
-          <p className="section-sub">Numbers don't lie. Here's what Varsaka Labs has delivered for teams across industries.</p>
+    <div className="case-page">
+      <section className="case-hero">
+        <div className="case-container">
+          <div className="section-tag fade-in">
+            <i className="fa-solid fa-chart-line" style={{ marginRight: '8px' }}></i> Success Stories
+          </div>
+          <h1 className="blog-title fade-in" style={{ marginBottom: '1.5rem' }}>Impactful Solutions for <br /><span>Our Partners</span></h1>
+          <p className="blog-sub fade-in" style={{ margin: '0 auto 4rem' }}>
+            Helping teams across the globe solve their most critical quality and security challenges through engineering excellence.
+          </p>
         </div>
-        <div className="services-grid">
-          {studies.map(s => (
-            <div key={s.client} className="svc-card fade-in">
-              <span className="svc-pill" style={{ marginBottom: '1rem', marginTop: 0 }}>{s.tag}</span>
+      </section>
+
+      <div className="case-container">
+        <div className="case-grid">
+          {studies.map((s, i) => (
+            <div key={i} className="case-card fade-in">
+              <div className="case-icon">
+                <i className={`fa-solid ${s.icon}`}></i>
+              </div>
+              <span className="case-tag">{s.tag}</span>
               <h3>{s.client}</h3>
-              <p style={{ fontWeight: 700, color: 'var(--blue-mid)', fontSize: '0.95rem', marginBottom: '0.6rem' }}>✅ {s.outcome}</p>
+              <div className="case-outcome">
+                <i className="fa-solid fa-circle-check" style={{ marginTop: '4px' }}></i>
+                <span>{s.outcome}</span>
+              </div>
               <p>{s.desc}</p>
             </div>
           ))}
         </div>
-      </section>
+      </div>
     </div>
   );
 }

@@ -155,14 +155,16 @@ export default function Portal() {
       // 🛡️ SECURITY FIX 2: Privilege Escalation Prevention
       // Check if user spoofed their role in sessionStorage
       const realRole = user.user_metadata?.role || 'employee';
-      if (sessionUser.role === 'admin' && realRole !== 'admin') {
-        console.warn("SECURITY ALERT: Privilege escalation attempt blocked.");
-        sessionStorage.removeItem('varsaka_user');
-        navigate('/login');
-        return;
-      }
+      const fullName = user.user_metadata?.full_name || user.email.split('@')[0];
 
-      setSession(sessionUser);
+      const verifiedSession = {
+        id: user.id,
+        name: fullName,
+        role: realRole,
+        email: user.email
+      };
+
+      setSession(verifiedSession);
       // Wait for session state to update before fetching data
     };
 
@@ -638,7 +640,7 @@ export default function Portal() {
                 </div>
               </div>
               <button type="submit" className="btn-save" style={{marginTop:'1rem'}} disabled={addingLead}>
-                {addingLead ? 'Processing...' : (session.role === 'admin' ? 'Create Lead →' : 'Submit for Approval →')}
+                {addingLead ? 'Processing...' : (session.role === 'admin' ? <>{'Create Lead'} <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></> : <>{'Submit for Approval'} <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></>)}
               </button>
             </form>
           </div>

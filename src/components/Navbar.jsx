@@ -68,7 +68,7 @@ export default function Navbar() {
         <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle Theme">
           {theme === 'light' ? '🌙' : '☀️'}
         </button>
-        <a href="/#contact" className="nav-cta" onClick={closeMenu}>Get Free Consult →</a>
+        <a href="/#contact" className="nav-cta" onClick={closeMenu}>Get Free Consult <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></a>
       </div>
 
       <button

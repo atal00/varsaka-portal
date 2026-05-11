@@ -109,7 +109,7 @@
   left: 30px;
   z-index: 998;
   background: white;
-  padding: 0.75rem 1.2rem;
+  padding: 0.65rem 0.75rem 0.65rem 1.2rem;
   border-radius: 100px;
   border-bottom-left-radius: 4px;
   font-size: 0.85rem;
@@ -117,14 +117,39 @@
   color: #1e293b;
   box-shadow: 0 10px 25px rgba(37, 99, 235, 0.15);
   border: 1px solid #e2e8f0;
-  cursor: pointer;
   animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 .chatbot-tooltip:hover {
   transform: translateY(-3px);
   box-shadow: 0 12px 30px rgba(37, 99, 235, 0.2);
   border-color: #2563eb;
+}
+
+.chatbot-tooltip-close {
+  background: #f1f5f9;
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  font-size: 0.7rem;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  font-weight: 700;
+  line-height: 1;
+}
+.chatbot-tooltip-close:hover {
+  background: #dc2626;
+  color: white;
+  transform: scale(1.1);
 }
 
 @keyframes bounceIn {

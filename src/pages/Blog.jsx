@@ -1,33 +1,87 @@
 import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { blogPosts } from '../data/blogPosts';
+import './Blog.css';
 
-const posts = [
-  { title: 'Why AI-Powered Testing is the Future of QA', date: 'April 28, 2026', tag: 'AI Testing', summary: 'Machine learning models are changing the game for test generation and anomaly detection. Here\'s how Varsaka Labs is staying ahead of the curve.' },
-  { title: '5 Signs Your Regression Suite Needs a Makeover', date: 'April 15, 2026', tag: 'Automation', summary: 'If your nightly regression run takes 6+ hours, it\'s time to rethink. We break down the red flags and how to fix them fast.' },
-  { title: 'OWASP Top 10 - What Every Dev Team Must Know in 2026', date: 'March 30, 2026', tag: 'Security', summary: 'Security vulnerabilities are as common as ever. We walk through the OWASP Top 10 and what each one means for your application.' },
-  { title: 'Performance Testing: Load vs. Stress vs. Soak - Explained Simply', date: 'March 12, 2026', tag: 'Performance', summary: 'These three test types sound similar but serve very different purposes. Let\'s demystify them with real-world examples.' },
-];
+function useFadeIn() {
+  useEffect(() => {
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach((e, i) => {
+        if (e.isIntersecting) {
+          setTimeout(() => e.target.classList.add('visible'), i * 80);
+          obs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.05 });
+    document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
+    return () => obs.disconnect();
+  }, []);
+}
 
 export default function Blog() {
+  useFadeIn();
   useEffect(() => { window.scrollTo(0, 0); }, []);
+
+  const featured = blogPosts[0];
+  const others = blogPosts.slice(1);
+
   return (
-    <div className="page-wrapper">
-      <section className="bg-white" style={{ paddingTop: 80 }}>
-        <div className="section-head center fade-in">
-          <div className="section-tag">✍️ Blog</div>
-          <h2 className="section-title">Insights from the QA Trenches</h2>
-          <p className="section-sub">Tips, trends, and honest takes on software quality - written by engineers, for engineers.</p>
+    <div className="blog-page">
+      {/* 🚀 Hero Section */}
+      <section className="blog-hero">
+        <div className="blog-container">
+          <div className="section-tag fade-in">✍️ Insights & Updates</div>
+          <h1 className="blog-title fade-in">Insights from the <br /><span>QA Trenches</span></h1>
+          <p className="blog-sub fade-in">
+            Tips, trends, and honest takes on software quality — written by engineers, for engineers.
+          </p>
         </div>
-        <div className="services-grid">
-          {posts.map(p => (
-            <div key={p.title} className="svc-card fade-in" style={{ cursor: 'default' }}>
-              <span className="svc-pill" style={{ marginBottom: '1rem', marginTop: 0 }}>{p.tag}</span>
-              <h3 style={{ fontSize: '1.05rem', marginBottom: '0.5rem' }}>{p.title}</h3>
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-light)', marginBottom: '0.6rem' }}>{p.date}</p>
+      </section>
+
+      <div className="blog-container">
+        {/* ⭐ Featured Post */}
+        <div className="featured-post fade-in">
+          <div className="featured-img" style={{ overflow: 'hidden' }}>
+            <img 
+              src={featured.image} 
+              alt={featured.title} 
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+            />
+          </div>
+          <div className="featured-content" style={{ textAlign: 'center', alignItems: 'center' }}>
+            <span className="blog-card-tag">{featured.tag}</span>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: 900, marginBottom: '1rem' }}>{featured.title}</h2>
+            <div className="blog-card-meta">
+              <i className="fa-regular fa-calendar"></i> {featured.date}
+            </div>
+            <p style={{ fontSize: '1rem' }}>{featured.summary}</p>
+            <Link to={`/blog/${featured.id}`} className="read-more">
+              Read Article <i className="fa-solid fa-arrow-right"></i>
+            </Link>
+          </div>
+        </div>
+
+        {/* 📚 Blog Grid */}
+        <div className="blog-grid">
+          {others.map((p, i) => (
+            <div key={i} className="blog-card fade-in">
+              <div className="blog-card-img" style={{ height: '200px', marginBottom: '1.5rem', borderRadius: '16px', overflow: 'hidden' }}>
+                <img src={p.image} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+              <span className="blog-card-tag">{p.tag}</span>
+              <h3>{p.title}</h3>
+              <div className="blog-card-meta">
+                <i className="fa-regular fa-calendar"></i> {p.date}
+              </div>
               <p>{p.summary}</p>
+              <Link to={`/blog/${p.id}`} className="read-more">
+                Read More <i className="fa-solid fa-arrow-right"></i>
+              </Link>
             </div>
           ))}
         </div>
-      </section>
+      </div>
     </div>
   );
 }
+

@@ -16,6 +16,14 @@ const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 const NdaTemplate = lazy(() => import('./pages/NdaTemplate'));
 const Login = lazy(() => import('./pages/Login'));
 const Portal = lazy(() => import('./pages/Portal'));
+const FunctionalTesting = lazy(() => import('./pages/FunctionalTesting'));
+const AutomationTesting = lazy(() => import('./pages/AutomationTesting'));
+const PerformanceTesting = lazy(() => import('./pages/PerformanceTesting'));
+const SecurityTesting = lazy(() => import('./pages/SecurityTesting'));
+const AIPoweredTesting = lazy(() => import('./pages/AIPoweredTesting'));
+const MobileTesting = lazy(() => import('./pages/MobileTesting'));
+const Apply = lazy(() => import('./pages/Apply'));
+const BlogDetail = lazy(() => import('./pages/BlogDetail'));
 import './index.css';
 
 function AnimationTrigger() {
@@ -49,11 +57,12 @@ export default function App() {
     document.addEventListener('contextmenu', block);
 
     const keyBlock = (e) => {
-      // Block F12, Ctrl+Shift+I (Inspect), Ctrl+Shift+J (Console), Ctrl+U (Source), Ctrl+S (Save)
+      // Block F12, Ctrl+Shift+I (Inspect), Ctrl+Shift+J (Console), Ctrl+U (Source), Ctrl+S (Save), Ctrl+Shift+C (Inspect Element)
       if (
         e.keyCode === 123 || 
         (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || 
-        (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83))
+        (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 70)) || // F is find
+        (e.metaKey && e.shiftKey && e.keyCode === 73) // Mac support
       ) {
         e.preventDefault();
         return false;
@@ -63,6 +72,14 @@ export default function App() {
 
     // Disable Drag & Drop (prevents people from stealing assets easily)
     document.addEventListener('dragstart', block);
+    
+    // 🛡️ Prevent Console Logging in Production
+    if (import.meta.env.PROD) {
+      console.log = () => {};
+      console.warn = () => {};
+      console.error = () => {};
+      console.info = () => {};
+    }
 
     return () => {
       document.removeEventListener('contextmenu', block);
@@ -84,7 +101,9 @@ export default function App() {
           <Route path="/" element={<><Navbar /><Home /><Chatbot /><Footer /></>} />
           <Route path="/about" element={<><Navbar /><About /><Footer /></>} />
           <Route path="/blog" element={<><Navbar /><Blog /><Footer /></>} />
+          <Route path="/blog/:id" element={<><Navbar /><BlogDetail /><Footer /></>} />
           <Route path="/careers" element={<><Navbar /><Careers /><Footer /></>} />
+          <Route path="/apply" element={<><Navbar /><Apply /><Footer /></>} />
           <Route path="/case-studies" element={<><Navbar /><CaseStudies /><Footer /></>} />
           <Route path="/privacy-policy" element={<><Navbar /><PrivacyPolicy /><Footer /></>} />
           <Route path="/terms-of-service" element={<><Navbar /><TermsOfService /><Footer /></>} />
@@ -93,6 +112,14 @@ export default function App() {
           {/* Portal Pages */}
           <Route path="/login" element={<Login />} />
           <Route path="/portal" element={<Portal />} />
+
+          {/* Service Detail Pages */}
+          <Route path="/services/functional-testing" element={<><Navbar /><FunctionalTesting /><Footer /></>} />
+          <Route path="/services/automation-testing" element={<><Navbar /><AutomationTesting /><Footer /></>} />
+          <Route path="/services/performance-testing" element={<><Navbar /><PerformanceTesting /><Footer /></>} />
+          <Route path="/services/security-testing" element={<><Navbar /><SecurityTesting /><Footer /></>} />
+          <Route path="/services/ai-powered-testing" element={<><Navbar /><AIPoweredTesting /><Footer /></>} />
+          <Route path="/services/mobile-testing" element={<><Navbar /><MobileTesting /><Footer /></>} />
         </Routes>
       </Suspense>
     </BrowserRouter>

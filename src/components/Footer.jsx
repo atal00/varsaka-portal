@@ -16,11 +16,12 @@ export default function Footer() {
         <div className="footer-col">
           <h5>Services</h5>
           <ul>
-            <li><a href="/#services">Functional Testing</a></li>
-            <li><a href="/#services">Automation Testing</a></li>
-            <li><a href="/#services">Performance Testing</a></li>
-            <li><a href="/#services">Security Testing</a></li>
-            <li><a href="/#services">AI-Powered Testing</a></li>
+            <li><Link to="/services/functional-testing">Functional Testing</Link></li>
+            <li><Link to="/services/automation-testing">Automation Testing</Link></li>
+            <li><Link to="/services/performance-testing">Performance Testing</Link></li>
+            <li><Link to="/services/security-testing">Security Testing</Link></li>
+            <li><Link to="/services/ai-powered-testing">AI-Powered Testing</Link></li>
+            <li><Link to="/services/mobile-testing">Mobile Testing</Link></li>
           </ul>
         </div>
 

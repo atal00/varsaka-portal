@@ -209,7 +209,7 @@ export default function Login() {
           </div>
           
           <button type="submit" className="login-btn" disabled={isLocked}>
-            {isLocked ? 'Access Locked' : 'Secure Login →'}
+            {isLocked ? 'Access Locked' : <>{'Secure Login'} <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></>}
           </button>
         </form>
 
@@ -217,7 +217,7 @@ export default function Login() {
           <p>🛡️ End-to-End Encrypted Session</p>
           <span>Authorized Personnel Only</span>
           <div className="login-home-link">
-            <button onClick={() => navigate('/')} className="btn-home-back">← Back to Website</button>
+            <button onClick={() => navigate('/')} className="btn-home-back">🏠 Back to Website</button>
           </div>
         </div>
       </div>

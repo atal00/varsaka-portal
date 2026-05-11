@@ -32,6 +32,7 @@ const KNOWLEDGE_BASE = [
 export default function Chatbot() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [tooltipDismissed, setTooltipDismissed] = useState(false);
   const [messages, setMessages] = useState(INITIAL_MSGS);
   const [input, setInput] = useState('');
   const [isLeadMode, setIsLeadMode] = useState(false);
@@ -231,9 +232,18 @@ export default function Chatbot() {
 
   return (
     <>
-      {!open && (
-        <div className="chatbot-tooltip" onClick={() => setOpen(true)}>
-          🚀 Ship without bugs! 🛡️ Talk to our experts. 💬✨
+      {!open && !tooltipDismissed && (
+        <div className="chatbot-tooltip">
+          <span onClick={() => setOpen(true)} style={{ cursor: 'pointer', flex: 1 }}>
+            🚀 Ship without bugs! 🛡️ Talk to our experts. 💬✨
+          </span>
+          <button
+            className="chatbot-tooltip-close"
+            onClick={(e) => { e.stopPropagation(); setTooltipDismissed(true); }}
+            aria-label="Close tooltip"
+          >
+            ✕
+          </button>
         </div>
       )}
       <button className="chatbot-toggler" aria-label="Open Chat" onClick={() => setOpen(o => !o)}>

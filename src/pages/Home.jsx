@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import './Home.css';
+import { sanitize, validateEmail } from '../utils/security';
 
 const ALL_COUNTRIES = [
   { name: 'Afghanistan', code: '+93', flag: '🇦🇫' }, { name: 'Albania', code: '+355', flag: '🇦🇱' }, { name: 'Algeria', code: '+213', flag: '🇩🇿' },
@@ -99,7 +101,7 @@ export default function Home() {
   const [formState, setFormState] = useState({ 
     name: '', email: '', phone: '', countryCode: '+91', service: 'Functional Testing', message: '' 
   });
-  const [btnTxt, setBtnTxt] = useState('Send Message →');
+  const [btnTxt, setBtnTxt] = useState(<>{'Send Message'} <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></>);
   const [btnColor, setBtnColor] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
@@ -132,9 +134,11 @@ export default function Home() {
 
   const [faqOpen, setFaqOpen] = useState(null);
   const faqs = [
-    { q: 'How long does it take to start a project?', a: 'We can typically onboard and begin work within 3-5 business days after the initial consultation and agreement signing. We prioritize fast turnarounds without compromising on quality.' },
-    { q: 'Do you provide daily test reports?', a: 'Yes! Transparency is one of our core values. We provide daily status reports, and you will have real-time access to our live testing dashboards and bug tracking systems.' },
-    { q: 'Can you work with our existing tools (Jira, GitHub, etc.)?', a: 'Absolutely. We seamlessly integrate into your existing CI/CD pipelines and use your preferred project management tools. We adapt to your workflow, not the other way around.' },
+    { q: 'How quickly can you start, and what does onboarding look like?', a: 'We can usually kick off within 3–5 business days of signing the agreement. Onboarding involves a 1-hour discovery call to understand your product, tech stack, and testing goals. From there we create a test plan, share it with your team for review, and start execution. No lengthy setup - we keep it lean.' },
+    { q: 'What if we are already mid-project? Can you join without disrupting our workflow?', a: 'Yes, this is actually our most common scenario. We review your existing test artifacts, CI/CD setup, and sprint cadence first. We then integrate at whatever point makes sense - sometimes that\'s just picking up a regression backlog, other times it\'s building automation alongside active development. We adapt to your rhythm.' },
+    { q: 'How do you handle NDAs and data confidentiality?', a: 'We sign an NDA before any project discussion begins - no exceptions. All test environments are isolated, credentials are never stored beyond the project, and our team operates under strict data handling policies. For regulated industries (fintech, healthcare), we align with your compliance requirements as part of scoping.' },
+    { q: 'What does pricing look like? Do you charge per hour or per project?', a: 'Both options are available. For well-defined scope (e.g., a release regression or VAPT), we offer fixed-price engagements. For ongoing QA support or automation builds, we work on a monthly retainer or T&M basis. We share a detailed estimate after the discovery call - no vague ballpark numbers.' },
+    { q: 'Do you integrate with Jira, GitHub, Slack and our existing tools?', a: 'Yes. We work inside your existing toolchain - Jira for bug reporting, GitHub/GitLab for CI triggers, Slack for daily standups and blockers, and TestRail or your preferred TMS for test management. We don\'t ask you to switch tools or adopt new platforms unless there\'s a clear benefit.' },
   ];
 
   const handleChange = e => setFormState(s => ({ ...s, [e.target.name]: e.target.value }));
@@ -148,7 +152,7 @@ export default function Home() {
     const now = Date.now();
     if (lastSub && (now - parseInt(lastSub)) < 30000) {
       setBtnTxt('🛡️ Please wait 30s');
-      setTimeout(() => setBtnTxt('Send Message →'), 2000);
+      setTimeout(() => setBtnTxt(<>{'Send Message'} <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></>), 2000);
       return;
     }
 
@@ -158,10 +162,11 @@ export default function Home() {
     // 🛡️ BOT CHECK 2: Hardened Math CAPTCHA
     const expected = captcha.op === '+' ? (captcha.a + captcha.b) : (captcha.a - captcha.b);
     if (parseInt(userCaptcha) !== expected) {
-      setCaptchaError(true);
       setBtnTxt('❌ Incorrect Math!');
+      generateCaptcha();
+      setCaptchaError(true);
       setTimeout(() => {
-        setBtnTxt('Send Message →');
+        setBtnTxt(<>{'Send Message'} <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></>);
         setCaptchaError(false);
       }, 2000);
       return;
@@ -171,22 +176,33 @@ export default function Home() {
     setBtnTxt('Sending...');
     setBtnColor('');
     try {
+      // 🛡️ Data Sanitization
+      const cleanData = {
+        name: sanitize(formState.name),
+        email: sanitize(formState.email),
+        phone: `${formState.countryCode} ${sanitize(formState.phone)}`,
+        service: formState.service,
+        message: sanitize(formState.message)
+      };
+
+      if (!validateEmail(cleanData.email)) {
+        setBtnTxt('❌ Invalid Email');
+        setSubmitting(false);
+        return;
+      }
+
       // 1. Send Email Notification
       await fetch(FS_TARGET, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(formState)
+        body: JSON.stringify(cleanData)
       });
 
       // 2. Save to Supabase Secure Database
       const { error: sbError } = await supabase
         .from('leads')
         .insert([{
-          name: formState.name,
-          email: formState.email,
-          phone: `${formState.countryCode} ${formState.phone}`,
-          service: formState.service,
-          message: formState.message,
+          ...cleanData,
           source: 'Website' // 🌐 Source Tag
         }]);
 
@@ -206,10 +222,10 @@ export default function Home() {
       }
 
 
-      setBtnTxt("✅ Message Sent! We'll reply soon 😊"); 
+      setBtnTxt(<>{"✅ Message Sent! We'll reply soon 😊"}</>); 
       setBtnColor('#16a34a');
       setTimeout(() => { 
-        setBtnTxt('Send Message →'); 
+        setBtnTxt(<>{'Send Message'} <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></>); 
         setBtnColor(''); 
         setSubmitting(false); 
         setFormState({ name:'', email:'', phone:'', countryCode: '+91', service:'Functional Testing', message:'' }); 
@@ -220,7 +236,7 @@ export default function Home() {
       setBtnTxt('❌ Error sending. Try again.'); 
       setBtnColor('#dc2626');
       setTimeout(() => { 
-        setBtnTxt('Send Message →'); 
+        setBtnTxt(<>{'Send Message'} <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></>); 
         setBtnColor(''); 
         setSubmitting(false); 
       }, 3500);
@@ -237,8 +253,8 @@ export default function Home() {
         <h1>Varsaka Labs <span className="h1-blue h1-underline">Precision</span> in Testing<br />Excellence in Development</h1>
         <p className="hero-sub">Varsaka Labs delivers friendly, thorough software testing - functional, automation, performance, security and AI-powered - so your team ships with total confidence.</p>
         <div className="hero-btns">
-          <a href="#contact" className="btn-primary">Start Free Consultation 🚀</a>
-          <a href="#services" className="btn-ghost">See All Services ↓</a>
+          <a href="#contact" className="btn-primary">Start Free Consultation <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></a>
+          <a href="#services" className="btn-ghost">See All Services <i className="fa-solid fa-arrow-down" style={{ marginLeft: '8px' }}></i></a>
         </div>
         <div className="hero-proof">
           <div className="proof-avs">
@@ -248,15 +264,15 @@ export default function Home() {
           </div>
           <div className="proof-copy">
             <span className="proof-stars">★★★★★</span>
-            <strong>150+ projects delivered</strong>
-            loved by 100+ teams across India
+            <strong>Trusted by 25+ clients in just 4 months</strong>
+            99% satisfaction rate - quality you can count on
           </div>
         </div>
       </section>
 
       {/* STATS */}
       <div className="stats-strip">
-        {[['🚀','150+','Projects Tested'],['😊','99%','Client Satisfaction'],['👩‍💻','50+','Expert Testers'],['⚡','5x','Faster Bug Detection']].map(([icon,num,label]) => (
+        {[['🚀','25+','Projects in 4 Months'],['😊','99%','Client Satisfaction'],['👩‍💻','20+','Expert Testers'],['⚡','5x','Faster Bug Detection']].map(([icon,num,label]) => (
           <div key={label} className="stat">
             <span className="stat-icon">{icon}</span>
             <span className="stat-num">{num}</span>
@@ -274,19 +290,20 @@ export default function Home() {
         </div>
         <div className="services-grid">
           {[
-            {icon:'🧪',title:'Functional Testing',desc:'We verify every feature works exactly as your users expect - across browsers, devices, and all those sneaky edge cases.',pill:'Manual & Scripted'},
-            {icon:'🤖',title:'Automation Testing',desc:'Build it once, run it forever. We design solid automation frameworks with Selenium, Playwright and Cypress - cutting your regression time by up to 80%.',pill:'Selenium · Cypress · Playwright'},
-            {icon:'⚡',title:'Performance Testing',desc:'We simulate thousands of users hitting your app at once - finding bottlenecks before they find your customers.',pill:'JMeter · k6 · Gatling'},
-            {icon:'🔐',title:'Security Testing',desc:'Your users trust you with their data. We run penetration tests, OWASP audits and vulnerability assessments so that trust is never broken.',pill:'OWASP · VAPT · Pen Testing'},
-            {icon:'🧠',title:'AI-Powered Testing',desc:'We use machine learning to auto-generate smart test cases, detect anomalies early, and keep test scripts self-healing.',pill:'ML · Smart Automation · AI QA'},
-            {icon:'📱',title:'Mobile Testing',desc:'Native, hybrid or cross-platform - we test on 100+ real devices. iOS and Android, every screen size, pixel-perfect quality guaranteed.',pill:'iOS · Android · Cross-Platform'},
+            {icon:'🧪',title:'Functional Testing',desc:'We verify every feature works exactly as your users expect - across browsers, devices, and all those sneaky edge cases.',pill:'Manual & Scripted', link:'/services/functional-testing'},
+            {icon:'🤖',title:'Automation Testing',desc:'Build it once, run it forever. We design solid automation frameworks with Selenium, Playwright and Cypress - cutting your regression time by up to 80%.',pill:'Selenium · Cypress · Playwright', link:'/services/automation-testing'},
+            {icon:'⚡',title:'Performance Testing',desc:'We simulate thousands of users hitting your app at once - finding bottlenecks before they find your customers.',pill:'JMeter · k6 · Gatling', link:'/services/performance-testing'},
+            {icon:'🔐',title:'Security Testing',desc:'Your users trust you with their data. We run penetration tests, OWASP audits and vulnerability assessments so that trust is never broken.',pill:'OWASP · VAPT · Pen Testing', link:'/services/security-testing'},
+            {icon:'🧠',title:'AI-Powered Testing',desc:'We use machine learning to auto-generate smart test cases, detect anomalies early, and keep test scripts self-healing.',pill:'ML · Smart Automation · AI QA', link:'/services/ai-powered-testing'},
+            {icon:'📱',title:'Mobile Testing',desc:'Native, hybrid or cross-platform - we test on 100+ real devices. iOS and Android, every screen size, pixel-perfect quality guaranteed.',pill:'iOS · Android · Cross-Platform', link:'/services/mobile-testing'},
           ].map(s => (
-            <div key={s.title} className="svc-card fade-in">
+            <Link key={s.title} to={s.link} className="svc-card fade-in" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
               <div className="svc-icon">{s.icon}</div>
               <h3>{s.title}</h3>
               <p>{s.desc}</p>
               <span className="svc-pill">{s.pill}</span>
-            </div>
+              <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#2563eb', fontWeight: 700 }}>Learn More <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></div>
+            </Link>
           ))}
         </div>
       </section>
@@ -358,9 +375,9 @@ export default function Home() {
         </div>
         <div className="testi-grid">
           {[
-            {stars:'★★★★★',text:'"Varsaka found critical security vulnerabilities before our product launch. Their attention to detail literally saved us. Super friendly team - felt like working with colleagues, not contractors!"',name:'Rahul Sharma',role:'CTO, Ourfab Technologies',bg:'#2563eb',init:'RS'},
-            {stars:'★★★★★',text:'"Our regression went from 2 days to 4 hours after Varsaka\'s automation suite. ROI was visible in the first sprint. They explained everything clearly - zero jargon, 100% transparent."',name:'Priya Kapoor',role:'VP Engineering, Techtd',bg:'#1d4ed8',init:'PK'},
-            {stars:'★★★★★',text:'"Their AI testing caught edge cases we\'d missed for months! Warm, communicative and genuinely invested in our success. Would recommend Varsaka to anyone building serious software."',name:'Arjun Mehta',role:'Product Lead, TakeCare360',bg:'#3b82f6',init:'AM'},
+            {stars:'★★★★★',text:'"We were two weeks from launch and still had flaky test coverage. Varsaka stepped in, mapped out the gaps, and ran a full regression cycle in under 4 days. They caught 3 critical payment flow bugs we had no idea about. Honestly saved our release."',name:'Rohan Verma',role:'Engineering Manager, FinVault India',bg:'#2563eb',init:'RV'},
+            {stars:'★★★★★',text:'"I was sceptical about outsourcing QA, but Varsaka changed my mind quickly. They set up a Playwright automation suite in 2 weeks, integrated it into our GitHub pipeline, and our regression time dropped from 6 hours to under 45 minutes. The communication was clear throughout - no fluff."',name:'Sneha Iyer',role:'Head of Product, Shopmatic',bg:'#1d4ed8',init:'SI'},
+            {stars:'★★★★★',text:'"We needed VAPT done before our ISO audit. The Varsaka team delivered a detailed penetration test report with CVSS scores and clear remediation steps. Auditors were satisfied on first review. Professional, thorough, and reasonably priced."',name:'Karthik Nair',role:'CTO, MedCore Systems',bg:'#3b82f6',init:'KN'},
           ].map(t => (
             <div key={t.name} className="testi-card fade-in">
               <div className="stars">{t.stars}</div>
@@ -407,125 +424,128 @@ export default function Home() {
       </div>
 
       {/* CONTACT */}
-      <section id="contact" className="bg-white">
-        <div className="contact-grid">
-          <div className="fade-in">
-            <div className="section-tag">👋 Get In Touch</div>
-            <h2 className="section-title">Let's Talk About Your Project!</h2>
-            <p className="section-sub" style={{marginBottom:'2.5rem'}}>We're friendly people - no pressure, no sales pitch. Just an honest conversation about how we can help your team ship better software.</p>
-            {[{icon:'📧',label:'Email',val:'info@varsaka.com'},{icon:'💬',label:'WhatsApp',val:<a href="https://wa.me/917396106271" style={{color:'inherit', textDecoration:'none'}}>+91 73961 06271</a>},{icon:'📍',label:'Location',val:'Hyderabad, Telangana, India'},{icon:'⏰',label:'Response Time',val:'Within 4 business hours 😊'}].map(c => (
-              <div key={c.label} className="contact-info-item">
-                <div className="contact-icon">{c.icon}</div>
-                <div><div className="contact-info-label">{c.label}</div><div className="contact-info-val">{c.val}</div></div>
-              </div>
-            ))}
-          </div>
-          <div className="form-wrap fade-in">
-            <form onSubmit={handleSubmit}>
-              <div className="form-group"><label>Your Name *</label><input type="text" name="name" placeholder="Abhishek Sharma" required value={formState.name} onChange={handleChange} /></div>
-              <div className="form-group">
-                <label>Email Address</label>
-                <input type="email" name="email" placeholder="Your work email" value={formState.email} onChange={handleChange} required />
-              </div>
-              <div className="form-group">
-                <label>Phone Number</label>
-                <div style={{display:'flex', gap:'5px', position:'relative'}}>
-                  <div 
-                    style={{
-                      width:'100px', padding:'0.75rem', borderRadius:'8px', border:'1.5px solid var(--border)', 
-                      background:'var(--bg-white)', color:'var(--text)', cursor:'pointer', display:'flex', justifyContent:'space-between', alignItems:'center',
-                      fontSize: '0.9rem', fontWeight: '600'
-                    }}
-                    onClick={() => setShowCountryList(!showCountryList)}
-                  >
-                    <span>{formState.countryCode}</span>
-                    <span>▾</span>
-                  </div>
+      <section id="contact" className="contact-section">
+        <div className="contact-wrapper">
 
-                  {showCountryList && (
-                    <div className="country-dropdown-list" style={{
-                      position:'absolute', top:'100%', left:0, width:'250px', maxHeight:'250px', 
-                      overflowY:'auto', background:'var(--bg-white)', border:'1.5px solid var(--border)', 
-                      borderRadius:'12px', boxShadow:'var(--shadow-md)', zIndex:1000, marginTop:'5px'
-                    }}>
-                      <input 
-                        type="text" 
-                        placeholder="Search country..." 
-                        style={{width:'100%', padding:'10px', border:'none', borderBottom:'1px solid var(--border)', position:'sticky', top:0, background:'var(--bg-white)', color:'var(--text)'}}
-                        value={countrySearch}
-                        onChange={e => setCountrySearch(e.target.value)}
-                        autoFocus
-                        onClick={e => e.stopPropagation()}
-                      />
-                      {ALL_COUNTRIES.filter(c => c.name.toLowerCase().includes(countrySearch.toLowerCase()) || c.code.includes(countrySearch)).map(c => (
-                        <div 
-                          key={c.name}
-                          style={{padding:'12px', cursor:'pointer', fontSize:'0.85rem', borderBottom:'1px solid var(--border)', display:'flex', gap:'10px', color:'var(--text)'}}
-                          onClick={() => {
-                            setFormState({...formState, countryCode: c.code});
-                            setShowCountryList(false);
-                            setCountrySearch('');
-                          }}
-                          onMouseOver={e => e.currentTarget.style.background = 'var(--blue-light)'}
-                          onMouseOut={e => e.currentTarget.style.background = 'transparent'}
-                        >
-                          <span>{c.flag}</span>
-                          <strong>{c.code}</strong> 
-                          <span style={{color:'#64748b'}}>{c.name}</span>
-                        </div>
-                      ))}
+          {/* LEFT PANEL */}
+          <div className="contact-left fade-in">
+            <div className="contact-left-inner">
+              <div className="contact-avail-badge">
+                <span className="avail-dot" />
+                Currently available for new projects
+              </div>
+              <h2 className="contact-left-title">Let's Build Something Great Together</h2>
+              <p className="contact-left-sub">No pressure, no sales pitch - just an honest conversation about how we can help you ship better software, faster.</p>
+
+              <div className="contact-tiles">
+                {[
+                  { icon: '📧', label: 'Email Us', val: 'info@varsaka.com', sub: 'We reply within 4 business hours' },
+                  { icon: '💬', label: 'WhatsApp', val: <a href="https://wa.me/917396106271" style={{color:'inherit',textDecoration:'none'}}>+91 73961 06271</a>, sub: 'Quick questions? Chat instantly' },
+                  { icon: '📍', label: 'Based In', val: 'Hyderabad, Telangana', sub: 'Serving clients across the globe' },
+                ].map(c => (
+                  <div key={c.label} className="contact-tile">
+                    <div className="contact-tile-icon">{c.icon}</div>
+                    <div>
+                      <div className="contact-tile-label">{c.label}</div>
+                      <div className="contact-tile-val">{c.val}</div>
+                      <div className="contact-tile-sub">{c.sub}</div>
                     </div>
-                  )}
-
-                  <input 
-                    style={{flex:1}}
-                    type="tel" 
-                    name="phone"
-                    placeholder="Your contact number" 
-                    value={formState.phone} 
-                    onChange={(e) => setFormState({...formState, phone: e.target.value.replace(/\D/g, '')})} 
-                  />
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Service Needed</label>
-                <select name="service" value={formState.service} onChange={handleChange}>
-                  {['Functional Testing','Automation Testing','Performance Testing','Security Testing','AI-Powered Testing','Mobile Testing','Full QA Partnership'].map(s => <option key={s}>{s}</option>)}
-                </select>
-              </div>
-              <div className="form-group"><label>Tell Us About Your Project</label><textarea name="message" placeholder="Just a brief about your project" value={formState.message} onChange={handleChange} /></div>
-              
-              {/* 🛡️ Math CAPTCHA UI */}
-              <div className="form-group captcha-group">
-                <label>Security Verification</label>
-                <div style={{display:'flex', gap:'10px', alignItems:'center'}}>
-                  <div className="captcha-box" style={{
-                    padding: '0.75rem 1rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px',
-                    fontWeight: '700', color: '#1e293b', fontSize: '1rem', minWidth: '100px', textAlign: 'center'
-                  }}>
-                    {captcha.a} {captcha.op} {captcha.b} = 
                   </div>
-                  <input 
-                    type="number" 
-                    placeholder="?" 
-                    value={userCaptcha} 
-                    onChange={e => {setUserCaptcha(e.target.value); setCaptchaError(false);}}
-                    style={{width: '80px', borderColor: captchaError ? '#ef4444' : '#e2e8f0'}}
-                    required
-                  />
-                  <button type="button" onClick={generateCaptcha} style={{
-                    background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '1.2rem'
-                  }} title="Refresh Question">↻</button>
-                </div>
-                {captchaError && <p style={{color: '#ef4444', fontSize: '0.75rem', marginTop: '5px'}}>Incorrect answer. Please try again.</p>}
+                ))}
               </div>
 
-              <input type="text" name="_honey" style={{display:'none'}} />
-              <button type="submit" className="submit-btn" id="submitBtn" disabled={submitting} style={btnColor ? {background:btnColor} : {}}>
-                {btnTxt}
-              </button>
-            </form>
+              <div className="contact-trust">
+                {['🔒 NDA First', '⚡ 3–5 Day Kickoff', '🌍 Global Clients', '✅ 99% Satisfaction'].map(t => (
+                  <span key={t} className="contact-trust-chip">{t}</span>
+                ))}
+              </div>
+            </div>
           </div>
+
+          {/* RIGHT PANEL - FORM */}
+          <div className="contact-right fade-in">
+            <div className="form-wrap-v2">
+              <div className="form-wrap-header">
+                <div>
+                  <h3>Send Us a Message</h3>
+                  <p>We'll get back to you within 4 business hours.</p>
+                </div>
+                <span className="form-time-badge">⏱ 2 min</span>
+              </div>
+
+              <form onSubmit={handleSubmit}>
+                <div className="form-row-2">
+                  <div className="form-group">
+                    <label>Your Name <span className="req">*</span></label>
+                    <input type="text" name="name" placeholder="e.g. Rahul Verma" required value={formState.name} onChange={handleChange} />
+                  </div>
+                  <div className="form-group">
+                    <label>Work Email <span className="req">*</span></label>
+                    <input type="email" name="email" placeholder="you@company.com" value={formState.email} onChange={handleChange} required />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Phone Number</label>
+                  <div style={{display:'flex', gap:'6px', position:'relative'}}>
+                    <div
+                      style={{width:'108px', padding:'0.75rem', borderRadius:'10px', border:'1.5px solid var(--border)', background:'var(--bg-white)', color:'var(--text)', cursor:'pointer', display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:'0.9rem', fontWeight:'600', flexShrink:0}}
+                      onClick={() => setShowCountryList(!showCountryList)}
+                    >
+                      <span>{formState.countryCode}</span><span>▾</span>
+                    </div>
+                    {showCountryList && (
+                      <div className="country-dropdown-list" style={{position:'absolute', top:'100%', left:0, width:'260px', maxHeight:'240px', overflowY:'auto', background:'var(--bg-white)', border:'1.5px solid var(--border)', borderRadius:'12px', boxShadow:'var(--shadow-md)', zIndex:1000, marginTop:'5px'}}>
+                        <input type="text" placeholder="Search country..." style={{width:'100%', padding:'10px', border:'none', borderBottom:'1px solid var(--border)', position:'sticky', top:0, background:'var(--bg-white)', color:'var(--text)'}} value={countrySearch} onChange={e => setCountrySearch(e.target.value)} autoFocus onClick={e => e.stopPropagation()} />
+                        {ALL_COUNTRIES.filter(c => c.name.toLowerCase().includes(countrySearch.toLowerCase()) || c.code.includes(countrySearch)).map(c => (
+                          <div key={c.name} style={{padding:'11px 12px', cursor:'pointer', fontSize:'0.85rem', borderBottom:'1px solid var(--border)', display:'flex', gap:'10px', color:'var(--text)'}}
+                            onClick={() => { setFormState({...formState, countryCode: c.code}); setShowCountryList(false); setCountrySearch(''); }}
+                            onMouseOver={e => e.currentTarget.style.background = 'var(--blue-light)'}
+                            onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                          >
+                            <span>{c.flag}</span><strong>{c.code}</strong><span style={{color:'#64748b'}}>{c.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <input style={{flex:1}} type="tel" name="phone" placeholder="Your contact number" value={formState.phone} onChange={e => setFormState({...formState, phone: e.target.value.replace(/\D/g, '')})} />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Service You Need</label>
+                  <select name="service" value={formState.service} onChange={handleChange}>
+                    {['Functional Testing','Automation Testing','Performance Testing','Security Testing','AI-Powered Testing','Mobile Testing','Full QA Partnership'].map(s => <option key={s}>{s}</option>)}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Tell Us About Your Project</label>
+                  <textarea name="message" placeholder="Brief description - what you're building, current challenges, timeline, etc." value={formState.message} onChange={handleChange} />
+                </div>
+
+                {/* 🛡️ Math CAPTCHA */}
+                <div className="form-group captcha-group">
+                  <label>Quick Security Check 🛡️</label>
+                  <div style={{display:'flex', gap:'10px', alignItems:'center'}}>
+                    <div style={{padding:'0.75rem 1.1rem', background:'var(--blue-light)', border:'1.5px solid var(--blue-pale)', borderRadius:'10px', fontWeight:'800', color:'var(--blue-mid)', fontSize:'1rem', minWidth:'110px', textAlign:'center'}}>
+                      {captcha.a} {captcha.op} {captcha.b} =
+                    </div>
+                    <input type="number" placeholder="?" value={userCaptcha} onChange={e => { setUserCaptcha(e.target.value); setCaptchaError(false); }} style={{width:'80px', borderColor: captchaError ? '#ef4444' : 'var(--border)'}} required />
+                    <button type="button" onClick={generateCaptcha} style={{background:'var(--bg)', border:'1.5px solid var(--border)', borderRadius:'8px', color:'var(--text-muted)', cursor:'pointer', fontSize:'1.1rem', padding:'0.55rem 0.7rem'}} title="New question">↻</button>
+                  </div>
+                  {captchaError && <p style={{color:'#ef4444', fontSize:'0.75rem', marginTop:'6px'}}>❌ Incorrect. Please try again.</p>}
+                </div>
+
+                <input type="text" name="_honey" style={{display:'none'}} />
+                <button type="submit" className="submit-btn" id="submitBtn" disabled={submitting} style={btnColor ? {background:btnColor} : {}}>
+                  {btnTxt}
+                </button>
+                <p className="form-privacy-note">🔒 Your details are safe with us. We never spam or share your data.</p>
+              </form>
+            </div>
+          </div>
+
         </div>
       </section>
     </>
