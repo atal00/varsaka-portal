@@ -192,12 +192,16 @@ export default function Home() {
         return;
       }
 
-      // 1. Send Email Notification
-      await fetch(FS_TARGET, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(cleanData)
-      });
+      // 1. Send Email Notification (Check if URL exists)
+      if (FS_TARGET) {
+        await fetch(FS_TARGET, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(cleanData)
+        });
+      } else {
+        console.warn('Security Alert: VITE_FORMSUBMIT_URL is not configured.');
+      }
 
       // 2. Save to Supabase Secure Database
       const { error: sbError } = await supabase
@@ -213,9 +217,8 @@ export default function Home() {
       localStorage.setItem('varsaka_last_sub', Date.now().toString());
 
       // 3. Sync to Google Sheet (Live Mirror)
-      const gsUrl = import.meta.env.VITE_GS_SYNC_URL;
-      if (gsUrl) {
-        fetch(gsUrl, {
+      if (GS_TARGET) {
+        fetch(GS_TARGET, {
           method: 'POST',
           mode: 'no-cors',
           body: JSON.stringify({ action: 'add', ...formState })
@@ -230,10 +233,12 @@ export default function Home() {
         setBtnColor(''); 
         setSubmitting(false); 
         setFormState({ name:'', email:'', phone:'', countryCode: '+91', service:'Functional Testing', message:'' }); 
-        generateCaptcha(); // Reset CAPTCHA for next use
+        generateCaptcha(); 
       }, 3500);
     } catch (err) {
-      console.error('Submit Error:', err);
+      // 🛡️ Critical Error Logging (Bypass production block)
+      window.console.error('CRITICAL FORM ERROR:', err);
+      
       setBtnTxt('❌ Error sending. Try again.'); 
       setBtnColor('#dc2626');
       setTimeout(() => { 
