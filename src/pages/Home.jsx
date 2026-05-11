@@ -250,7 +250,22 @@ export default function Home() {
         title="Top Software Testing Company | Quality Assurance Services"
         description="Varsaka Labs is a premier software testing company providing functional, automation, performance, security, and AI-powered QA services to help you ship bug-free software."
         keywords="testing companies, best software testing company, QA services India, test automation agency, performance testing services, security audit company"
-      />
+      >
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": faqs.map(f => ({
+              "@type": "Question",
+              "name": f.q,
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": f.a
+              }
+            }))
+          })}
+        </script>
+      </SEO>
       {/* HERO */}
       <section className="hero">
         <div className="blob blob1" /><div className="blob blob2" /><div className="blob blob3" />

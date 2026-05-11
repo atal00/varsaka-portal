@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Core Pages -->
   <url>
     <loc>https://varsaka.com/</loc>
     <lastmod>2026-05-11</lastmod>
@@ -10,6 +11,28 @@
     <lastmod>2026-05-11</lastmod>
     <priority>0.8</priority>
   </url>
+  <url>
+    <loc>https://varsaka.com/blog</loc>
+    <lastmod>2026-05-11</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://varsaka.com/careers</loc>
+    <lastmod>2026-05-11</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://varsaka.com/case-studies</loc>
+    <lastmod>2026-05-11</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://varsaka.com/apply</loc>
+    <lastmod>2026-05-11</lastmod>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- Service Detail Pages -->
   <url>
     <loc>https://varsaka.com/services/functional-testing</loc>
     <lastmod>2026-05-11</lastmod>
@@ -40,14 +63,43 @@
     <lastmod>2026-05-11</lastmod>
     <priority>0.8</priority>
   </url>
+
+  <!-- Individual Blog Posts -->
   <url>
-    <loc>https://varsaka.com/blog</loc>
+    <loc>https://varsaka.com/blog/ai-testing-future</loc>
     <lastmod>2026-05-11</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://varsaka.com/careers</loc>
+    <loc>https://varsaka.com/blog/regression-suite-makeover</loc>
     <lastmod>2026-05-11</lastmod>
-    <priority>0.6</priority>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://varsaka.com/blog/owasp-top-10-2026</loc>
+    <lastmod>2026-05-11</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://varsaka.com/blog/performance-testing-explained</loc>
+    <lastmod>2026-05-11</lastmod>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Legal Pages -->
+  <url>
+    <loc>https://varsaka.com/privacy-policy</loc>
+    <lastmod>2026-05-11</lastmod>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://varsaka.com/terms-of-service</loc>
+    <lastmod>2026-05-11</lastmod>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://varsaka.com/nda-template</loc>
+    <lastmod>2026-05-11</lastmod>
+    <priority>0.4</priority>
   </url>
 </urlset>

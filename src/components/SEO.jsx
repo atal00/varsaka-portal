@@ -7,37 +7,57 @@ export default function SEO({
   type = 'website',
   keywords = 'software testing company, quality assurance services, functional testing, automation testing, performance testing, security testing, AI testing, mobile app testing',
   image = 'https://varsaka.com/og-image.png', // Fallback image
-  url = window.location.href
+  url = window.location.href,
+  children
 }) {
   const siteTitle = `${title} | ${name}`;
 
-  // JSON-LD Schema for a Software Testing Company
+  // JSON-LD Schema for a Professional Software Testing Company
   const schemaOrgJSONLD = {
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
+    "@type": "ProfessionalService",
     "name": "Varsaka Labs",
-    "operatingSystem": "All",
-    "applicationCategory": "BusinessApplication",
+    "alternateName": "Varsaka Labs QA",
+    "url": "https://varsaka.com",
+    "logo": "https://varsaka.com/logo.png",
+    "image": image,
     "description": description,
-    "publisher": {
-      "@type": "Organization",
-      "name": "Varsaka Labs",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://varsaka.com/logo.png"
-      }
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "HITEC City",
+      "addressLocality": "Hyderabad",
+      "addressRegion": "Telangana",
+      "postalCode": "500081",
+      "addressCountry": "IN"
     },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.9",
-      "reviewCount": "25"
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 17.4483,
+      "longitude": 78.3915
     },
-    "offers": {
-      "@type": "Offer",
-      "price": "0.00",
-      "priceCurrency": "USD",
-      "availability": "https://schema.org/InStock"
-    }
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "Software Testing Services",
+      "itemListElement": [
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Functional Testing" } },
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Automation Testing" } },
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Performance Testing" } },
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Security Testing" } },
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "AI-Powered Testing" } }
+      ]
+    },
+    "openingHoursSpecification": {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      "opens": "09:00",
+      "closes": "18:00"
+    },
+    "sameAs": [
+      "https://www.linkedin.com/company/varsaka-labs",
+      "https://twitter.com/varsakalabs"
+    ],
+    "telephone": "+917396106271",
+    "priceRange": "$$"
   };
 
   return (
@@ -61,11 +81,15 @@ export default function SEO({
       <meta name="twitter:title" content={siteTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={image} />
+      <meta name="twitter:site" content="@varsakalabs" />
+      <meta name="twitter:creator" content="@varsakalabs" />
 
       {/* JSON-LD Schema */}
       <script type="application/ld+json">
         {JSON.stringify(schemaOrgJSONLD)}
       </script>
+
+      {children}
     </Helmet>
   );
 }
