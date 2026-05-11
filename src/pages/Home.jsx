@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import './Home.css';
 import { sanitize, validateEmail } from '../utils/security';
+import SEO from '../components/SEO';
 
 const ALL_COUNTRIES = [
   { name: 'Afghanistan', code: '+93', flag: '🇦🇫' }, { name: 'Albania', code: '+355', flag: '🇦🇱' }, { name: 'Algeria', code: '+213', flag: '🇩🇿' },
@@ -245,13 +246,18 @@ export default function Home() {
 
   return (
     <>
+      <SEO 
+        title="Top Software Testing Company | Quality Assurance Services"
+        description="Varsaka Labs is a premier software testing company providing functional, automation, performance, security, and AI-powered QA services to help you ship bug-free software."
+        keywords="testing companies, best software testing company, QA services India, test automation agency, performance testing services, security audit company"
+      />
       {/* HERO */}
       <section className="hero">
         <div className="blob blob1" /><div className="blob blob2" /><div className="blob blob3" />
         <div className="hero-dots" />
-        <div className="hero-badge"><div className="badge-dot" />🏆 India's Trusted QA Partner</div>
-        <h1>Varsaka Labs <span className="h1-blue h1-underline">Precision</span> in Testing<br />Excellence in Development</h1>
-        <p className="hero-sub">Varsaka Labs delivers friendly, thorough software testing - functional, automation, performance, security and AI-powered - so your team ships with total confidence.</p>
+        <div className="hero-badge"><div className="badge-dot" />🏆 India's Leading Software Testing Company</div>
+        <h1>Varsaka Labs <span className="h1-blue h1-underline">Precision</span> in QA<br />Excellence in Testing</h1>
+        <p className="hero-sub">The trusted partner for global testing companies and startups. Varsaka Labs delivers thorough software testing - functional, automation, performance, security and AI-powered - so your team ships with total confidence.</p>
         <div className="hero-btns">
           <a href="#contact" className="btn-primary">Start Free Consultation <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></a>
           <a href="#services" className="btn-ghost">See All Services <i className="fa-solid fa-arrow-down" style={{ marginLeft: '8px' }}></i></a>

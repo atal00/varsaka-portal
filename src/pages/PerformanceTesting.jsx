@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import SEO from '../components/SEO';
 import './Services.css';
 
 export default function PerformanceTesting() {
@@ -8,6 +9,11 @@ export default function PerformanceTesting() {
 
   return (
     <div className="svc-page">
+      <SEO 
+        title="Performance Testing Services | Load & Stress Testing"
+        description="Varsaka Labs provides expert performance testing services including load, stress, and spike testing using JMeter and k6 to ensure your app handles thousands of users."
+        keywords="performance testing services, load testing company, stress testing, JMeter experts, k6 testing, website performance audit"
+      />
       <div className="svc-hero">
         <div className="svc-breadcrumb">
           <a onClick={() => navigate('/')}>Home</a>

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import SEO from '../components/SEO';
 import './Services.css';
 
 export default function MobileTesting() {
@@ -8,6 +9,11 @@ export default function MobileTesting() {
 
   return (
     <div className="svc-page">
+      <SEO 
+        title="Mobile App Testing Services | iOS & Android QA"
+        description="Varsaka Labs offers expert mobile app testing on 100+ real devices. We ensure your iOS and Android apps are pixel-perfect and perform flawlessly."
+        keywords="mobile app testing services, iOS testing company, Android QA services, real device testing, mobile application audit, Appium experts"
+      />
       <div className="svc-hero">
         <div className="svc-breadcrumb">
           <a onClick={() => navigate('/')}>Home</a>

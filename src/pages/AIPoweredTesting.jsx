@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import SEO from '../components/SEO';
 import './Services.css';
 
 export default function AIPoweredTesting() {
@@ -8,6 +9,11 @@ export default function AIPoweredTesting() {
 
   return (
     <div className="svc-page">
+      <SEO 
+        title="AI-Powered Testing Services | Intelligent QA Solutions"
+        description="Varsaka Labs uses machine learning and AI to deliver intelligent software testing. We provide self-healing scripts and anomaly detection for modern applications."
+        keywords="AI powered testing, intelligent QA, machine learning in testing, self healing automation, predictive QA services, smart software testing"
+      />
       <div className="svc-hero">
         <div className="svc-breadcrumb">
           <a onClick={() => navigate('/')}>Home</a>

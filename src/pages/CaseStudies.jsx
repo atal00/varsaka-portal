@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import SEO from '../components/SEO';
 import './CaseStudies.css';
 
 const studies = [
@@ -49,6 +50,11 @@ export default function CaseStudies() {
 
   return (
     <div className="case-page">
+      <SEO 
+        title="Case Studies | Software Testing Success Stories"
+        description="Explore how Varsaka Labs has helped global clients solve their quality and security challenges. See our success stories in automation, security audits, and performance engineering."
+        keywords="software testing case studies, QA success stories, security audit results, automation testing impact, performance testing examples"
+      />
       <section className="case-hero">
         <div className="case-container">
           <div className="section-tag fade-in">

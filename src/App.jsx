@@ -1,5 +1,6 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Chatbot from './components/Chatbot';
@@ -89,39 +90,41 @@ export default function App() {
   }, []);
 
   return (
-    <BrowserRouter>
-      <AnimationTrigger />
-      
-      {/* Global Scroll Trigger */}
-      <ScrollTop />
+    <HelmetProvider>
+      <BrowserRouter>
+        <AnimationTrigger />
+        
+        {/* Global Scroll Trigger */}
+        <ScrollTop />
 
-      <Suspense fallback={<div style={{height: '100vh', background: 'var(--bg-white)'}} />}>
-        <Routes>
-          {/* Public Pages with Nav/Footer */}
-          <Route path="/" element={<><Navbar /><Home /><Chatbot /><Footer /></>} />
-          <Route path="/about" element={<><Navbar /><About /><Footer /></>} />
-          <Route path="/blog" element={<><Navbar /><Blog /><Footer /></>} />
-          <Route path="/blog/:id" element={<><Navbar /><BlogDetail /><Footer /></>} />
-          <Route path="/careers" element={<><Navbar /><Careers /><Footer /></>} />
-          <Route path="/apply" element={<><Navbar /><Apply /><Footer /></>} />
-          <Route path="/case-studies" element={<><Navbar /><CaseStudies /><Footer /></>} />
-          <Route path="/privacy-policy" element={<><Navbar /><PrivacyPolicy /><Footer /></>} />
-          <Route path="/terms-of-service" element={<><Navbar /><TermsOfService /><Footer /></>} />
-          <Route path="/nda-template" element={<><Navbar /><NdaTemplate /><Footer /></>} />
-          
-          {/* Portal Pages */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/portal" element={<Portal />} />
+        <Suspense fallback={<div style={{height: '100vh', background: 'var(--bg-white)'}} />}>
+          <Routes>
+            {/* Public Pages with Nav/Footer */}
+            <Route path="/" element={<><Navbar /><Home /><Chatbot /><Footer /></>} />
+            <Route path="/about" element={<><Navbar /><About /><Footer /></>} />
+            <Route path="/blog" element={<><Navbar /><Blog /><Footer /></>} />
+            <Route path="/blog/:id" element={<><Navbar /><BlogDetail /><Footer /></>} />
+            <Route path="/careers" element={<><Navbar /><Careers /><Footer /></>} />
+            <Route path="/apply" element={<><Navbar /><Apply /><Footer /></>} />
+            <Route path="/case-studies" element={<><Navbar /><CaseStudies /><Footer /></>} />
+            <Route path="/privacy-policy" element={<><Navbar /><PrivacyPolicy /><Footer /></>} />
+            <Route path="/terms-of-service" element={<><Navbar /><TermsOfService /><Footer /></>} />
+            <Route path="/nda-template" element={<><Navbar /><NdaTemplate /><Footer /></>} />
+            
+            {/* Portal Pages */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/portal" element={<Portal />} />
 
-          {/* Service Detail Pages */}
-          <Route path="/services/functional-testing" element={<><Navbar /><FunctionalTesting /><Footer /></>} />
-          <Route path="/services/automation-testing" element={<><Navbar /><AutomationTesting /><Footer /></>} />
-          <Route path="/services/performance-testing" element={<><Navbar /><PerformanceTesting /><Footer /></>} />
-          <Route path="/services/security-testing" element={<><Navbar /><SecurityTesting /><Footer /></>} />
-          <Route path="/services/ai-powered-testing" element={<><Navbar /><AIPoweredTesting /><Footer /></>} />
-          <Route path="/services/mobile-testing" element={<><Navbar /><MobileTesting /><Footer /></>} />
-        </Routes>
-      </Suspense>
-    </BrowserRouter>
+            {/* Service Detail Pages */}
+            <Route path="/services/functional-testing" element={<><Navbar /><FunctionalTesting /><Footer /></>} />
+            <Route path="/services/automation-testing" element={<><Navbar /><AutomationTesting /><Footer /></>} />
+            <Route path="/services/performance-testing" element={<><Navbar /><PerformanceTesting /><Footer /></>} />
+            <Route path="/services/security-testing" element={<><Navbar /><SecurityTesting /><Footer /></>} />
+            <Route path="/services/ai-powered-testing" element={<><Navbar /><AIPoweredTesting /><Footer /></>} />
+            <Route path="/services/mobile-testing" element={<><Navbar /><MobileTesting /><Footer /></>} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </HelmetProvider>
   );
 }

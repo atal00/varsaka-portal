@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import SEO from '../components/SEO';
 import './Services.css';
 
 export default function FunctionalTesting() {
@@ -8,6 +9,11 @@ export default function FunctionalTesting() {
 
   return (
     <div className="svc-page">
+      <SEO 
+        title="Functional Testing Services | Manual & Scripted QA"
+        description="Varsaka Labs provides comprehensive functional testing services to ensure every feature of your software works perfectly across all devices and browsers."
+        keywords="functional testing services, manual testing company, software feature validation, regression testing, QA manual testing agency"
+      />
       <div className="svc-hero">
         <div className="svc-breadcrumb">
           <a onClick={() => navigate('/')}>Home</a>

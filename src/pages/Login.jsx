@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import logo from '../assets/logo.png';
 import { supabase } from '../supabaseClient';
 import './Login.css';
@@ -125,6 +126,9 @@ export default function Login() {
 
   return (
     <div className={`login-page ${role}-mode`}>
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="login-card fade-in visible">
         <div className="login-header">
           <div className="login-animation">

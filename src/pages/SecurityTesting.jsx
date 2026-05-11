@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import SEO from '../components/SEO';
 import './Services.css';
 
 export default function SecurityTesting() {
@@ -8,6 +9,11 @@ export default function SecurityTesting() {
 
   return (
     <div className="svc-page">
+      <SEO 
+        title="Security Testing & VAPT Services | OWASP Audit"
+        description="Varsaka Labs provides comprehensive security testing and VAPT services. We run penetration tests and OWASP audits to protect your application from vulnerabilities."
+        keywords="security testing services, VAPT company, penetration testing agency, OWASP audit, ethical hacking services, website security audit"
+      />
       <div className="svc-hero">
         <div className="svc-breadcrumb">
           <a onClick={() => navigate('/')}>Home</a>

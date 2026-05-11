@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import SEO from '../components/SEO';
 import './Services.css';
 
 export default function AutomationTesting() {
@@ -8,6 +9,11 @@ export default function AutomationTesting() {
 
   return (
     <div className="svc-page">
+      <SEO 
+        title="Automation Testing Services | Selenium, Playwright, Cypress"
+        description="Varsaka Labs offers professional automation testing services. We build scalable frameworks using Selenium, Playwright, and Cypress to reduce regression time by 80%."
+        keywords="automation testing services, test automation agency, Selenium automation, Playwright testing company, Cypress automation, CI/CD testing integration"
+      />
       <div className="svc-hero">
         <div className="svc-breadcrumb">
           <a onClick={() => navigate('/')}>Home</a>

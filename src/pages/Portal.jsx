@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import logo from '../assets/logo.png';
 import { supabase } from '../supabaseClient';
 import './Portal.css';
@@ -517,6 +518,9 @@ export default function Portal() {
 
   return (
     <div className="portal-page">
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <header className="portal-header">
         <div className="portal-brand">
           <div className="brand-logo-stack" onClick={() => navigate('/')} style={{cursor: 'pointer'}}>

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { blogPosts } from '../data/blogPosts';
+import SEO from '../components/SEO';
 import './Blog.css';
 
 function useFadeIn() {
@@ -27,6 +28,11 @@ export default function Blog() {
 
   return (
     <div className="blog-page">
+      <SEO 
+        title="Quality Assurance Blog | Testing Insights & Trends"
+        description="Stay updated with the latest in software testing. Our blog features expert insights on automation, performance, security, and the future of QA engineering."
+        keywords="software testing blog, QA trends, automation testing insights, software quality articles, testing best practices"
+      />
       {/* 🚀 Hero Section */}
       <section className="blog-hero">
         <div className="blog-container">

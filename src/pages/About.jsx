@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import SEO from '../components/SEO';
 import './About.css';
 
 function useFadeIn() {
@@ -48,6 +49,11 @@ export default function About() {
 
   return (
     <div className="about-page">
+      <SEO 
+        title="About Us | Our Mission & Values"
+        description="Learn about Varsaka Labs, India's leading software testing company. Discover our mission, core values, and why we are the trusted QA partner for global tech teams."
+        keywords="about varsaka labs, software testing experts, Hyderabad QA company, our mission and values, quality engineering team"
+      />
       {/* 🚀 Hero Section */}
       <section className="about-hero">
         <div className="about-container">

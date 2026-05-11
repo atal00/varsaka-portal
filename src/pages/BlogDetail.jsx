@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { blogPosts } from '../data/blogPosts';
+import SEO from '../components/SEO';
 import './Blog.css';
 
 export default function BlogDetail() {
@@ -29,6 +30,12 @@ export default function BlogDetail() {
 
   return (
     <div className="blog-detail-page">
+      <SEO 
+        title={post.title}
+        description={post.summary}
+        keywords={`${post.tag}, ${post.title.toLowerCase()}, software testing insights, QA blog`}
+        image={post.image}
+      />
       <div id="reading-progress" className="reading-progress-bar"></div>
       {/* 🚀 Article Header Image */}
       <div className="blog-detail-header-img" style={{ height: '400px', overflow: 'hidden' }}>

@@ -5,11 +5,24 @@
 
 export const sanitize = (str) => {
   if (typeof str !== 'string') return str;
-  return str
-    .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "") // Remove script tags
-    .replace(/on\w+="[^"]*"/gim, "") // Remove inline event handlers
-    .replace(/javascript:[^"]*/gim, "") // Remove javascript: pseudo-protocol
+  
+  // 🛡️ Step 1: Remove potentially dangerous tags and attributes
+  const clean = str
+    .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "")
+    .replace(/on\w+="[^"]*"/gim, "")
+    .replace(/javascript:[^"]*/gim, "")
     .trim();
+
+  // 🛡️ Step 2: Escape HTML special characters to prevent XSS
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  
+  return clean.replace(/[&<>"']/g, (m) => map[m]);
 };
 
 export const validateEmail = (email) => {
