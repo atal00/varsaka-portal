@@ -19,7 +19,7 @@ export const blogPosts = [
       <p>AI can analyze your application's UI and code structure to automatically generate test cases. Instead of writing thousands of lines of fragile Selenium scripts, engineers can now use AI to "crawl" the app and identify critical paths, edge cases, and potential failure points automatically.</p>
       
       <h2>2. Self-Healing Scripts</h2>
-      <p>One of the biggest pain points in QA is "flaky tests" — tests that fail because a button's ID changed or a div moved by 2 pixels. AI-powered testing tools use object recognition and probability to find the correct element even if its properties have changed, drastically reducing maintenance time.</p>
+      <p>One of the biggest pain points in QA is "flaky tests" - tests that fail because a button's ID changed or a div moved by 2 pixels. AI-powered testing tools use object recognition and probability to find the correct element even if its properties have changed, drastically reducing maintenance time.</p>
       
       <h2>3. Anomaly Detection</h2>
       <p>While traditional tests check for "Expected vs Actual" results, AI can look for "Abnormal" behavior. By training on historical data, AI can detect performance regressions, visual glitches, or security patterns that a human or a standard script might miss.</p>

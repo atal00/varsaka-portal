@@ -135,7 +135,7 @@ export default function Home() {
 
   const [faqOpen, setFaqOpen] = useState(null);
   const faqs = [
-    { q: 'How quickly can you start, and what does onboarding look like?', a: 'We can usually kick off within 3–5 business days of signing the agreement. Onboarding involves a 1-hour discovery call to understand your product, tech stack, and testing goals. From there we create a test plan, share it with your team for review, and start execution. No lengthy setup - we keep it lean.' },
+    { q: 'How quickly can you start, and what does onboarding look like?', a: 'We can usually kick off within 3-5 business days of signing the agreement. Onboarding involves a 1-hour discovery call to understand your product, tech stack, and testing goals. From there we create a test plan, share it with your team for review, and start execution. No lengthy setup - we keep it lean.' },
     { q: 'What if we are already mid-project? Can you join without disrupting our workflow?', a: 'Yes, this is actually our most common scenario. We review your existing test artifacts, CI/CD setup, and sprint cadence first. We then integrate at whatever point makes sense - sometimes that\'s just picking up a regression backlog, other times it\'s building automation alongside active development. We adapt to your rhythm.' },
     { q: 'How do you handle NDAs and data confidentiality?', a: 'We sign an NDA before any project discussion begins - no exceptions. All test environments are isolated, credentials are never stored beyond the project, and our team operates under strict data handling policies. For regulated industries (fintech, healthcare), we align with your compliance requirements as part of scoping.' },
     { q: 'What does pricing look like? Do you charge per hour or per project?', a: 'Both options are available. For well-defined scope (e.g., a release regression or VAPT), we offer fixed-price engagements. For ongoing QA support or automation builds, we work on a monthly retainer or T&M basis. We share a detailed estimate after the discovery call - no vague ballpark numbers.' },
@@ -461,7 +461,7 @@ export default function Home() {
               </div>
 
               <div className="contact-trust">
-                {['🔒 NDA First', '⚡ 3–5 Day Kickoff', '🌍 Global Clients', '✅ 99% Satisfaction'].map(t => (
+                {['🔒 NDA First', '⚡ 3-5 Day Kickoff', '🌍 Global Clients', '✅ 99% Satisfaction'].map(t => (
                   <span key={t} className="contact-trust-chip">{t}</span>
                 ))}
               </div>

@@ -64,7 +64,7 @@ export default function About() {
           </h1>
           <p className="about-sub fade-in">
             Headquartered in Hyderabad and serving clients globally, we are a team of passionate engineers 
-            dedicated to making software better — one test at a time.
+            dedicated to making software better - one test at a time.
           </p>
 
           <div className="about-stats">

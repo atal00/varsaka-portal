@@ -63,7 +63,7 @@ const jobs = [
     title: 'QA Engineer - Manual & Exploratory',
     location: 'Hyderabad',
     type: 'Full-Time / Intern',
-    exp: '0–2 Years',
+    exp: '0-2 Years',
     tags: ['Test Cases', 'Bug Reporting', 'Jira', 'Agile'],
     desc: 'Join our QA team to write detailed test cases, perform exploratory testing, and help maintain quality across multiple client projects. Great entry point for freshers who are passionate about quality.',
     posted: '8 May 2026',

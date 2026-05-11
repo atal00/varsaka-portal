@@ -39,7 +39,7 @@ export default function Blog() {
           <div className="section-tag fade-in">✍️ Insights & Updates</div>
           <h1 className="blog-title fade-in">Insights from the <br /><span>QA Trenches</span></h1>
           <p className="blog-sub fade-in">
-            Tips, trends, and honest takes on software quality — written by engineers, for engineers.
+            Tips, trends, and honest takes on software quality - written by engineers, for engineers.
           </p>
         </div>
       </section>
