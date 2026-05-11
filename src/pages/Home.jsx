@@ -194,11 +194,15 @@ export default function Home() {
 
       // 1. Send Email Notification (Check if URL exists)
       if (FS_TARGET) {
-        await fetch(FS_TARGET, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify(cleanData)
-        });
+        try {
+          await fetch(FS_TARGET, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(cleanData)
+          });
+        } catch (e) {
+          console.warn('Email notification failed, but continuing to database save...', e);
+        }
       } else {
         console.warn('Security Alert: VITE_FORMSUBMIT_URL is not configured.');
       }
@@ -236,7 +240,7 @@ export default function Home() {
         generateCaptcha(); 
       }, 3500);
     } catch (err) {
-      // 🛡️ Critical Error Logging (Bypass production block)
+      // 🛡️ Critical Error Logging
       window.console.error('CRITICAL FORM ERROR:', err);
       
       setBtnTxt('❌ Error sending. Try again.'); 

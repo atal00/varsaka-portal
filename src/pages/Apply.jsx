@@ -82,6 +82,15 @@ export default function Apply() {
       return;
     }
 
+    // 🛡️ BOT CHECK 0: Rate Limit (1 submission every 30 seconds)
+    const lastSub = localStorage.getItem('varsaka_apply_last_sub');
+    const now = Date.now();
+    if (lastSub && (now - parseInt(lastSub)) < 30000) {
+      setBtnTxt('🛡️ Please wait 30s');
+      setTimeout(() => setBtnTxt(<>{'Submit Application'} <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></>), 2000);
+      return;
+    }
+
     setSubmitting(true);
     setBtnTxt('Uploading Application...');
 
@@ -114,6 +123,9 @@ export default function Apply() {
           body: JSON.stringify(cleanData)
         });
       }
+
+      // 🛡️ Log submission time for security
+      localStorage.setItem('varsaka_apply_last_sub', Date.now().toString());
 
       // 2. Success UI
       setBtnTxt('Application Received! 🎉');
