@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import logo from '../assets/logo.png';
 import { supabase } from '../supabaseClient';
+import { sanitize } from '../utils/security'; // 🛡️ Security Guard
 import './Portal.css';
 
 const ALL_COUNTRIES = [
@@ -62,6 +63,16 @@ const ALL_COUNTRIES = [
   { name: 'Venezuela', code: '+58', flag: '🇻🇪' }, { name: 'Vietnam', code: '+84', flag: '🇻🇳' }, { name: 'Yemen', code: '+967', flag: '🇾🇪' },
   { name: 'Zambia', code: '+260', flag: '🇿🇲' }, { name: 'Zimbabwe', code: '+263', flag: '🇿🇼' }
 ];
+
+const PROJECT_SUGGESTIONS = {
+  'QA Intern': ['Automated Regression Suite', 'Security & Pen Testing', 'Mobile App Quality Audit', 'API Performance Benchmarking', 'Cross-Browser Compatibility Lab'],
+  'Frontend Intern': ['Interactive Dashboard UI', 'Component Library Development', 'Responsive Website Redesign', 'E-commerce Frontend Optimization', 'Accessibility (WCAG) Compliance'],
+  'Backend Intern': ['Scalable Microservices Architecture', 'Secure Authentication System', 'Real-time Data Processing', 'API Integration Middleware', 'Cloud Infrastructure Automation'],
+  'Full Stack Intern': ['Workforce Management Portal', 'Customer Analytics Platform', 'Internal CRM System', 'Inventory Tracking Application', 'Collaborative Project Tool'],
+  'Security Analyst Intern': ['Threat Intelligence Dashboard', 'Network Vulnerability Scan', 'Zero Trust Policy Framework', 'Encryption Standards Audit', 'Incident Response Protocol'],
+  'HR Intern': ['Employee Engagement Survey', 'Talent Acquisition Pipeline', 'Onboarding Workflow Optimization', 'Policy Documentation Refresh', 'Staff Performance Metrics'],
+  'Finance Intern': ['Accounts Reconciliation System', 'Budget Variance Analysis', 'Tax Compliance Reporting', 'Expense Tracking Dashboard', 'Financial Projection Modeling']
+};
 
 export default function Portal() {
   const [session, setSession] = useState(null);
@@ -129,6 +140,47 @@ export default function Portal() {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+
+  // --- Certificate Management States ---
+  const [showInterns, setShowInterns] = useState(false);
+  const [interns, setInterns] = useState([]);
+  const [loadingInterns, setLoadingInterns] = useState(false);
+  const [showAddIntern, setShowAddIntern] = useState(false);
+  const [newIntern, setNewIntern] = useState({
+    full_name: '',
+    internship_role: 'QA Intern',
+    project_title: '',
+    mentor_name: 'Technical Director',
+    grade: 'A+',
+    location: 'Gachibowli, Hyderabad',
+    start_date: '',
+    end_date: '',
+    issue_date: new Date().toISOString().split('T')[0],
+    cert_year: new Date().getFullYear().toString(),
+    cert_num: '',
+    certificate_id: ''
+  });
+  const [addingIntern, setAddingIntern] = useState(false);
+  
+  // --- Smart ID Suggestion Logic ---
+  useEffect(() => {
+    if (showAddIntern && interns.length > 0) {
+      const yearPrefix = `VAR-INT-${newIntern.cert_year}-`;
+      const yearNums = interns
+        .filter(i => i.certificate_id.startsWith(yearPrefix))
+        .map(i => {
+          const parts = i.certificate_id.split('-');
+          const num = parseInt(parts[parts.length - 1]);
+          return isNaN(num) ? 0 : num;
+        });
+
+      const nextNum = yearNums.length > 0 ? Math.max(...yearNums) + 1 : 1;
+      // Pad to 3 digits (e.g. 001, 015, 120)
+      const paddedNum = nextNum.toString().padStart(3, '0');
+      
+      setNewIntern(prev => ({ ...prev, cert_num: paddedNum }));
+    }
+  }, [newIntern.cert_year, showAddIntern, interns]);
 
   const navigate = useNavigate();
 
@@ -302,6 +354,83 @@ export default function Portal() {
     }
   };
 
+  const fetchInterns = async () => {
+    setLoadingInterns(true);
+    try {
+      const { data, error } = await supabase
+        .from('certificates')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setInterns(data);
+    } catch (e) {
+      console.error('Fetch Interns Error:', e);
+      triggerInfo('Failed to load interns: ' + e.message);
+    }
+    setLoadingInterns(false);
+  };
+
+  const addIntern = async (e) => {
+    e.preventDefault();
+    if (!newIntern.full_name || !newIntern.cert_num || !newIntern.start_date || !newIntern.end_date) {
+      return triggerInfo('Please fill in all required fields (Name, Serial Number, and Dates)');
+    }
+    setAddingIntern(true);
+    try {
+      const internData = {
+        full_name: sanitize(newIntern.full_name),
+        internship_role: sanitize(newIntern.internship_role),
+        project_title: sanitize(newIntern.project_title),
+        mentor_name: sanitize(newIntern.mentor_name),
+        grade: sanitize(newIntern.grade),
+        location: sanitize(newIntern.location),
+        start_date: newIntern.start_date,
+        end_date: newIntern.end_date,
+        issue_date: newIntern.issue_date,
+        certificate_id: `VAR-INT-${newIntern.cert_year}-${newIntern.cert_num}`
+      };
+      
+      if (internData.internship_role === 'other') {
+        internData.internship_role = sanitize(internData.custom_role) || 'Intern';
+      }
+      delete internData.custom_role;
+      delete internData.cert_year;
+      delete internData.cert_num;
+
+      const { error } = await supabase
+        .from('certificates')
+        .insert([internData]);
+      if (error) throw error;
+      triggerInfo('Intern certificate added successfully!');
+      setNewIntern({
+        full_name: '',
+        internship_role: 'QA Intern',
+        project_title: '',
+        mentor_name: 'Technical Director',
+        grade: 'A+',
+        location: 'Gachibowli, Hyderabad',
+        start_date: '',
+        end_date: '',
+        issue_date: new Date().toISOString().split('T')[0],
+        cert_year: new Date().getFullYear().toString(),
+        cert_num: '',
+        certificate_id: ''
+      });
+      setShowAddIntern(false);
+      fetchInterns();
+    } catch (e) {
+      triggerInfo('Error: ' + e.message);
+    }
+    setAddingIntern(false);
+  };
+
+  const deleteIntern = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this intern record?')) return;
+    const { error } = await supabase.from('certificates').delete().eq('id', id);
+    if (error) triggerInfo('Delete failed: ' + error.message);
+    else fetchInterns();
+  };
+
   const handleLogout = () => {
     sessionStorage.removeItem('varsaka_user');
     sessionStorage.removeItem('notified_refresh'); // 🔄 Clear flag on logout
@@ -392,14 +521,14 @@ export default function Portal() {
     try {
       const isStaff = session.role === 'employee';
       const { error: insError } = await supabase.from('leads').insert([{
-        name: newLead.name,
-        email: newLead.email,
-        phone: `${newLead.countryCode} ${newLead.phone}`,
-        service: newLead.service,
-        message: newLead.msg,
+        name: sanitize(newLead.name),
+        email: sanitize(newLead.email),
+        phone: `${newLead.countryCode} ${sanitize(newLead.phone)}`,
+        service: sanitize(newLead.service),
+        message: sanitize(newLead.msg),
         status: isStaff ? 'approval_pending' : 'new',
         assigned_to: isStaff ? session.id : null,
-        source: session.name || 'Direct Admin' // 👤 Employee/Admin Tag
+        source: session.name || 'Direct Admin'
       }]);
 
       if (insError) throw insError;
@@ -540,8 +669,13 @@ export default function Portal() {
             {showAddLead ? '✕ Close' : '➕ Add Lead'}
           </button>
           {session.role === 'admin' && (
-            <button className="btn-settings" onClick={() => { setShowTeam(!showTeam); setShowMobileMenu(false); }}>
+            <button className="btn-settings" onClick={() => { setShowTeam(!showTeam); setShowInterns(false); setShowMobileMenu(false); }}>
               {showTeam ? '📋 Show Leads' : '👥 Team Workload'}
+            </button>
+          )}
+          {session.role === 'admin' && (
+            <button className="btn-settings" onClick={() => { setShowInterns(!showInterns); setShowTeam(false); setShowMobileMenu(false); if(!showInterns) fetchInterns(); }} style={{background: '#faf5ff', color: '#7c3aed', border: '1px solid #e9d5ff'}}>
+              {showInterns ? '📋 Show Leads' : '🎓 Manage Interns'}
             </button>
           )}
           {session.role === 'admin' && (
@@ -675,21 +809,187 @@ export default function Portal() {
                 );
               })}
             </div>
-            <div className="add-staff-form" style={{ marginTop: '2rem', borderTop: '1px solid #eee', paddingTop: '1.5rem', textAlign: 'center' }}>
-              <p style={{ color: '#64748b', fontWeight: '600', fontStyle: 'italic' }}>
-                💡 To add a new employee, kindly connect with your super admin.
-              </p>
+          </div>
+        )}
+        {showInterns && session.role === 'admin' && (
+          <div className="portal-settings-panel fade-in visible" style={{borderColor: '#7c3aed'}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.5rem'}}>
+              <h3>🎓 Intern Certificate Management</h3>
+              <button className="btn-save" onClick={() => setShowAddIntern(!showAddIntern)} style={{background: '#7c3aed'}}>
+                {showAddIntern ? '✕ Close Form' : '➕ Add Intern'}
+              </button>
+            </div>
+
+            {showAddIntern && (
+              <form className="add-lead-form" onSubmit={addIntern} style={{marginBottom:'2rem', background:'#f5f3ff', padding:'1.5rem', borderRadius:'12px'}}>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label>Full Name</label>
+                    <input type="text" placeholder="Intern Name" value={newIntern.full_name} onChange={e => setNewIntern({...newIntern, full_name: e.target.value})} required />
+                  </div>
+                  <div className="form-group">
+                    <label>Internship Role</label>
+                    <select 
+                      value={newIntern.internship_role} 
+                      onChange={e => setNewIntern({...newIntern, internship_role: e.target.value})}
+                    >
+                      <option value="QA Intern">QA Intern</option>
+                      <option value="Frontend Intern">Frontend Intern</option>
+                      <option value="Backend Intern">Backend Intern</option>
+                      <option value="Full Stack Intern">Full Stack Intern</option>
+                      <option value="Security Analyst Intern">Security Analyst Intern</option>
+                      <option value="HR Intern">HR Intern</option>
+                      <option value="Finance Intern">Finance Intern</option>
+                      <option value="other">Other (Custom Role)...</option>
+                    </select>
+                    {newIntern.internship_role === 'other' && (
+                      <input 
+                        type="text" 
+                        placeholder="Enter custom role title" 
+                        style={{marginTop: '10px'}}
+                        onChange={e => setNewIntern({...newIntern, custom_role: e.target.value})}
+                        required 
+                      />
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label>Certificate ID Generator</label>
+                    <div style={{display:'flex', alignItems:'center', gap:'5px'}}>
+                      <span style={{background: '#f1f5f9', padding: '0.6rem', borderRadius: '8px', fontWeight: 'bold', fontSize: '0.85rem', color: '#64748b'}}>VAR-INT-</span>
+                      <select 
+                        style={{width: '90px'}} 
+                        value={newIntern.cert_year} 
+                        onChange={e => setNewIntern({...newIntern, cert_year: e.target.value})}
+                      >
+                        <option value="2023">2023</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                      </select>
+                      <span style={{fontWeight: 'bold'}}>-</span>
+                      <input 
+                        type="text" 
+                        placeholder="001" 
+                        style={{flex: 1}} 
+                        value={newIntern.cert_num} 
+                        onChange={e => setNewIntern({...newIntern, cert_num: e.target.value.toUpperCase()})} 
+                        required 
+                      />
+                    </div>
+                    <p style={{fontSize: '0.7rem', color: '#94a3b8', marginTop: '5px'}}>
+                      Result: VAR-INT-{newIntern.cert_year}-{newIntern.cert_num || '???' }
+                    </p>
+                  </div>
+                  <div className="form-group">
+                    <label>Issue Date</label>
+                    <input type="date" value={newIntern.issue_date} onChange={e => setNewIntern({...newIntern, issue_date: e.target.value})} />
+                  </div>
+                  <div className="form-group" style={{gridColumn: 'span 2'}}>
+                    <label>Project Title</label>
+                    <input type="text" placeholder="e.g. AI-Powered Testing" value={newIntern.project_title} onChange={e => setNewIntern({...newIntern, project_title: e.target.value})} />
+                    
+                    {/* Suggestions Bar */}
+                    {PROJECT_SUGGESTIONS[newIntern.internship_role] && (
+                      <div className="suggestion-pills" style={{display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px'}}>
+                        {PROJECT_SUGGESTIONS[newIntern.internship_role].map(title => (
+                          <button 
+                            key={title} 
+                            type="button" 
+                            className="suggestion-pill"
+                            style={{
+                              padding: '4px 10px', fontSize: '0.7rem', borderRadius: '100px', 
+                              background: '#f1f5f9', border: '1px solid #e2e8f0', cursor: 'pointer',
+                              color: '#475569', transition: 'all 0.2s'
+                            }}
+                            onClick={() => setNewIntern({...newIntern, project_title: title})}
+                            onMouseOver={e => { e.target.style.background = '#e2e8f0'; e.target.style.color = '#1e293b'; }}
+                            onMouseOut={e => { e.target.style.background = '#f1f5f9'; e.target.style.color = '#475569'; }}
+                          >
+                            + {title}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label>Mentor / Guided By</label>
+                    <input type="text" placeholder="e.g. Atal Pandey" value={newIntern.mentor_name} onChange={e => setNewIntern({...newIntern, mentor_name: e.target.value})} />
+                  </div>
+                  <div className="form-group">
+                    <label>Performance Grade</label>
+                    <select value={newIntern.grade} onChange={e => setNewIntern({...newIntern, grade: e.target.value})}>
+                      <option value="A+">A+</option>
+                      <option value="A">A</option>
+                      <option value="B+">B+</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Office Location</label>
+                    <select value={newIntern.location} onChange={e => setNewIntern({...newIntern, location: e.target.value})}>
+                      <option value="Gachibowli, Hyderabad">Gachibowli, Hyderabad</option>
+                      <option value="Work From Home">Work From Home</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Start Date</label>
+                    <input type="date" value={newIntern.start_date} onChange={e => setNewIntern({...newIntern, start_date: e.target.value})} required />
+                  </div>
+                  <div className="form-group">
+                    <label>End Date</label>
+                    <input type="date" value={newIntern.end_date} onChange={e => setNewIntern({...newIntern, end_date: e.target.value})} required />
+                  </div>
+                </div>
+                <button type="submit" className="btn-save" style={{marginTop:'1rem', background:'#7c3aed'}} disabled={addingIntern}>
+                  {addingIntern ? 'Processing...' : 'Generate & Save Record'}
+                </button>
+              </form>
+            )}
+
+            <div className="leads-table-wrap">
+              <table className="leads-table">
+                <thead>
+                  <tr>
+                    <th>Certificate ID</th>
+                    <th>Intern Name</th>
+                    <th>Role</th>
+                    <th>Duration</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loadingInterns ? (
+                    <tr><td colSpan="5" style={{textAlign:'center'}}>Loading interns...</td></tr>
+                  ) : interns.length === 0 ? (
+                    <tr><td colSpan="5" style={{textAlign:'center'}}>No interns found.</td></tr>
+                  ) : interns.map(intern => (
+                    <tr key={intern.id}>
+                      <td><strong>{intern.certificate_id}</strong></td>
+                      <td>{intern.full_name}</td>
+                      <td><span className="role-badge employee" style={{background:'#f3e8ff', color:'#7e22ce'}}>{intern.internship_role}</span></td>
+                      <td>{new Date(intern.start_date).toLocaleDateString()} - {new Date(intern.end_date).toLocaleDateString()}</td>
+                      <td>
+                        <div style={{display:'flex', gap:'10px'}}>
+                          <button className="btn-refresh" onClick={() => window.open(`/verify/${intern.certificate_id}`, '_blank')} style={{padding:'4px 8px', fontSize:'0.75rem'}}>View</button>
+                          <button className="btn-del-staff" onClick={() => deleteIntern(intern.id)} style={{position:'static'}}>✕</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
 
-        <div className="mobile-stats-toggle">
-          <button className="btn-stats-toggle" onClick={() => setShowMobileStats(!showMobileStats)}>
-            {showMobileStats ? '📊 Hide Analytics' : '📊 View Analytics'}
-          </button>
-        </div>
+        {!showInterns && !showTeam && (
+          <>
+            <div className="mobile-stats-toggle">
+              <button className="btn-stats-toggle" onClick={() => setShowMobileStats(!showMobileStats)}>
+                {showMobileStats ? '📊 Hide Analytics' : '📊 View Analytics'}
+              </button>
+            </div>
 
-        <div className={`stats-bar ${showMobileStats ? 'stats-open' : ''}`}>
+            <div className={`stats-bar ${showMobileStats ? 'stats-open' : ''}`}>
           <div className="stat-box">
             <span>
               <img 
@@ -862,7 +1162,9 @@ export default function Portal() {
           </table>
           {filteredData.length === 0 && !loading && <div className="no-data">No results found.</div>}
         </div>
-      </main>
+      </>
+    )}
+  </main>
 
       {showRejectModal && (
         <div className="custom-modal-overlay">

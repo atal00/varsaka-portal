@@ -25,6 +25,7 @@ const AIPoweredTesting = lazy(() => import('./pages/AIPoweredTesting'));
 const MobileTesting = lazy(() => import('./pages/MobileTesting'));
 const Apply = lazy(() => import('./pages/Apply'));
 const BlogDetail = lazy(() => import('./pages/BlogDetail'));
+const VerifyCertificate = lazy(() => import('./pages/VerifyCertificate'));
 import './index.css';
 
 function AnimationTrigger() {
@@ -110,6 +111,7 @@ export default function App() {
             <Route path="/privacy-policy" element={<><Navbar /><PrivacyPolicy /><Footer /></>} />
             <Route path="/terms-of-service" element={<><Navbar /><TermsOfService /><Footer /></>} />
             <Route path="/nda-template" element={<><Navbar /><NdaTemplate /><Footer /></>} />
+            <Route path="/verify/:id" element={<VerifyCertificate />} />
             
             {/* Portal Pages */}
             <Route path="/login" element={<Login />} />

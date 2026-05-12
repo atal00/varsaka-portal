@@ -1,0 +1,438 @@
+.verify-page {
+    min-height: 100vh;
+    background: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4rem 1rem;
+    font-family: 'Cormorant Garamond', serif;
+}
+
+.verify-container {
+    max-width: 1000px;
+    width: 100%;
+}
+
+.verify-card {
+    background: #fff;
+    padding: 15px;
+    position: relative;
+    box-shadow: 0 50px 100px rgba(0,0,0,0.12);
+    border: 1px solid #e2e8f0;
+}
+
+/* Ornate Victorian Gold Border */
+.certificate-frame {
+    border: 3px solid #c5a059;
+    padding: 40px;
+    position: relative;
+    background: #fff;
+    background-image: 
+        linear-gradient(rgba(255,255,255,0.95), rgba(255,255,255,0.95)),
+        url("https://www.transparenttextures.com/patterns/natural-paper.png");
+}
+
+.certificate-frame::before {
+    content: '';
+    position: absolute;
+    top: 8px; left: 8px; right: 8px; bottom: 8px;
+    border: 1px solid #c5a059;
+}
+
+.certificate-frame::after {
+    content: '';
+    position: absolute;
+    top: 15px; left: 15px; right: 15px; bottom: 15px;
+    border: 10px double #1e293b;
+    pointer-events: none;
+}
+
+.cert-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    z-index: 0;
+}
+
+.ghost-watermark {
+    width: 380px;
+    height: 380px;
+    opacity: 0.04;
+    filter: grayscale(100%) contrast(0.6);
+    pointer-events: none;
+    border-radius: 50%;
+    border: 1px solid rgba(197, 160, 89, 0.2);
+    padding: 20px;
+    object-fit: contain;
+}
+
+/* Ornate Corners */
+.corner {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border: 2px solid #c5a059;
+    opacity: 0.6;
+    pointer-events: none;
+}
+.corner-tl { top: 25px; left: 25px; border-right: none; border-bottom: none; border-radius: 10px 0 0 0; }
+.corner-tr { top: 25px; right: 25px; border-left: none; border-bottom: none; border-radius: 0 10px 0 0; }
+.corner-bl { bottom: 25px; left: 25px; border-right: none; border-top: none; border-radius: 0 0 0 10px; }
+.corner-br { bottom: 25px; right: 25px; border-left: none; border-top: none; border-radius: 0 0 10px 0; }
+
+.cert-header {
+    text-align: center;
+    margin-bottom: 5px;
+    position: relative;
+    z-index: 1;
+}
+
+.cert-medal-wrap {
+    position: relative;
+    width: 80px;
+    margin: 0 auto 40px; /* Increased from 10px to clear the ribbon */
+}
+
+.cert-ribbon {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 90px;
+    background: linear-gradient(to bottom, #1e293b 0%, #1e293b 70%, transparent 100%);
+    clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 50% 85%, 0% 100%);
+    z-index: -1;
+    border: 1px solid #c5a059;
+}
+
+.cert-logo-badge {
+    width: 65px;
+    height: 65px;
+    margin: 10px auto 0;
+    background: #1e293b;
+    border: 3px solid #c5a059;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    position: relative;
+}
+
+.cert-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cert-header h1 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #1e293b 0%, #c5a059 50%, #1e293b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.cert-sub-title {
+    font-size: 1rem;
+    color: #c5a059;
+    font-weight: 700;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+
+.cert-body {
+    text-align: center;
+    margin: 5px 0;
+    container-type: inline-size; /* Makes the body a size container */
+    width: 100%;
+}
+
+.cert-text {
+    font-size: 1.3rem;
+    color: #475569;
+    font-style: italic;
+    margin: 0 !important;
+    line-height: 1;
+}
+
+.cert-name {
+    font-family: 'Cormorant Garamond', serif;
+    /* Auto-scaling: clamp(min, preferred_fluid_size, max) */
+    font-size: clamp(2rem, 10cqi, 3.5rem); 
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 !important;
+    line-height: 1.1;
+    position: relative;
+    display: inline-block;
+    white-space: nowrap; /* Ensures it stays on one line */
+}
+
+.cert-name::after {
+    display: none; /* Removed the line under name for a cleaner look */
+}
+
+.cert-main-content {
+    max-width: 800px;
+    margin: 0 auto;
+    font-size: 1.15rem;
+    color: #475569;
+    line-height: 1.6;
+}
+
+.highlight {
+    color: #1e293b;
+    font-weight: 700;
+}
+
+.cert-wish {
+    font-size: 1.05rem;
+}
+
+.cert-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 50px;
+    padding: 0 20px;
+}
+
+.footer-left, .footer-right {
+    width: 220px;
+    text-align: center;
+}
+
+.signature-line {
+    border-top: 1.5px solid #1e293b;
+    margin-top: 10px;
+    padding-top: 8px;
+}
+
+.sig-title {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #1e293b;
+    font-weight: 800;
+    font-family: 'Inter', sans-serif;
+}
+
+.signature-img {
+    position: absolute;
+    bottom: 0px; /* Moved slightly down from 10px */
+    left: 50%;
+    transform: translateX(-50%);
+    height: 135px;
+    width: 360px;
+    object-fit: contain;
+    mix-blend-mode: multiply;
+    /* This filter transforms the blue ink into a vibrant official red */
+    filter: brightness(0.7) contrast(1.5) sepia(1) hue-rotate(-50deg) saturate(15);
+    z-index: 10;
+    pointer-events: none;
+}
+
+.qr-code-wrap {
+    text-align: center;
+}
+
+.qr-code-canvas {
+    padding: 5px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.qr-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.6rem;
+    color: #94a3b8;
+    margin-top: 5px;
+    letter-spacing: 0.05em;
+}
+
+.cert-seal-overlap {
+    position: absolute;
+    width: 130px;
+    height: 130px;
+    top: -100px; /* Moved up from -60px */
+    left: 50%;
+    transform: translateX(-50%) rotate(-12deg);
+    object-fit: contain;
+    clip-path: circle(49%);
+    mix-blend-mode: multiply; /* This is the key for transparency */
+    /* This combo ensures background stays pure white while ink turns blue */
+    filter: brightness(1.1) contrast(1.5) sepia(1) hue-rotate(190deg) saturate(5);
+    opacity: 0.8;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.cert-id-tag {
+    position: absolute;
+    bottom: 40px;
+    right: 40px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+}
+
+.btn-print-wrap {
+    margin-top: 3rem;
+}
+
+.btn-print-cert {
+    background: #1e293b;
+    color: white;
+    border: none;
+    padding: 1.2rem 3rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(30, 41, 59, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-print-cert:hover {
+    background: #0f172a;
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 15px 40px rgba(30, 41, 59, 0.3);
+}
+
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 0;
+    }
+    body {
+        margin: 0;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        background: #fffdf9 !important; /* Matches certificate parchment */
+    }
+    .btn-print-wrap, .verify-header, .verify-footer, .scroll-top, .chatbot-container { 
+        display: none !important; 
+    }
+    .verify-page { 
+        background: #fffdf9 !important;
+        padding: 0 !important; 
+        margin: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        overflow: hidden !important;
+    }
+    .certificate-frame { 
+        width: 280mm !important; 
+        height: 195mm !important; 
+        border-width: 2px !important;
+        box-shadow: none !important;
+        /* Absolute Dead-Centering */
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        background: #fffdf9 !important;
+        padding: 40px !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    .cert-header h1 {
+        background: none !important;
+        -webkit-text-fill-color: #c5a059 !important;
+        color: #c5a059 !important;
+        font-size: 3.2rem !important;
+    }
+    /* Rigid 3-Column Grid for PDF */
+    .cert-footer { 
+        display: grid !important;
+        grid-template-columns: 1fr 1fr 1fr !important;
+        align-items: end !important;
+        margin-top: auto !important;
+        padding: 0 40px 50px 40px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    .footer-left {
+        width: 220px !important;
+        margin: 0 auto !important;
+        text-align: center !important;
+        position: relative !important;
+    }
+    .footer-right {
+        width: 220px !important;
+        margin: 0 auto 25px auto !important; /* Added 25px bottom margin */
+        text-align: center !important;
+        position: relative !important;
+    }
+    .signature-line {
+        width: 100% !important;
+        border-top: 1.5px solid #1e293b !important;
+        margin-top: 10px !important;
+        padding-top: 8px !important;
+    }
+    .signature-img {
+        position: absolute !important;
+        bottom: 0px !important; /* Moved slightly down from 10px */
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: 240px !important; 
+        z-index: 10 !important;
+    }
+    .cert-seal-overlap {
+        position: absolute !important;
+        top: -110px !important; /* Moved up from -75px */
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: 110px !important;
+        height: 110px !important;
+        z-index: 5 !important;
+    }
+    .qr-code-wrap {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin-bottom: 10px !important;
+    }
+    .qr-code-canvas {
+        width: 80px !important;
+        height: 80px !important;
+    }
+    .cert-id-tag {
+        position: absolute !important;
+        bottom: 30px !important; /* Tucked in safe zone */
+        right: 45px !important;  /* Back to the right side */
+        left: auto !important;
+        font-size: 0.6rem !important;
+        opacity: 0.5 !important;
+    }
+}
+
+@media (max-width: 850px) {
+    .certificate-frame { padding: 30px 20px; }
+    .cert-header h1 { font-size: 2.5rem; }
+    .cert-name { font-size: 3rem; padding: 0 20px; }
+    .cert-footer { flex-direction: column; gap: 40px; }
+    .footer-left, .footer-right { width: 100%; }
+}
