@@ -14,6 +14,29 @@ export default function VerifyCertificate() {
     const [loading, setLoading] = useState(true);
     const [certificate, setCertificate] = useState(null);
     const [error, setError] = useState(null);
+    const [showMobilePopup, setShowMobilePopup] = useState(false);
+
+    useEffect(() => {
+        // Show popup only on mobile and if not dismissed this session
+        const isMobile = window.innerWidth <= 850;
+        const dismissed = sessionStorage.getItem('cert-popup-dismissed');
+        if (isMobile && !dismissed) {
+            const timer = setTimeout(() => {
+                setShowMobilePopup(true);
+            }, 1500); // Delay for better UX
+            return () => clearTimeout(timer);
+        }
+    }, []);
+
+    const dismissPopup = () => {
+        setShowMobilePopup(false);
+        sessionStorage.setItem('cert-popup-dismissed', 'true');
+    };
+
+    const handleDownload = () => {
+        dismissPopup();
+        window.print();
+    };
 
     useEffect(() => {
         const fetchCertificate = async () => {
@@ -173,6 +196,26 @@ export default function VerifyCertificate() {
                     </button>
                 </div>
             </div>
+
+            {/* Mobile Download Suggestion Popup */}
+            {showMobilePopup && (
+                <div className="mobile-popup-overlay">
+                    <div className="mobile-popup-card">
+                        <button className="popup-close" onClick={dismissPopup}>&times;</button>
+                        <div className="popup-icon">📄</div>
+                        <h3>Better Experience</h3>
+                        <p>For the best viewing experience, we recommend downloading the official PDF certificate.</p>
+                        <div className="popup-actions">
+                            <button className="btn-popup-download" onClick={handleDownload}>
+                                Download PDF
+                            </button>
+                            <button className="btn-popup-view" onClick={dismissPopup}>
+                                Just View
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

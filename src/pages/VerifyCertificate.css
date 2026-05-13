@@ -59,8 +59,8 @@
 }
 
 .ghost-watermark {
-    width: 380px;
-    height: 380px;
+    width: min(380px, 80vw);
+    height: min(380px, 80vw);
     opacity: 0.04;
     filter: grayscale(100%) contrast(0.6);
     pointer-events: none;
@@ -154,8 +154,8 @@
 
 .cert-body {
     text-align: center;
-    margin: 5px 0;
-    container-type: inline-size; /* Makes the body a size container */
+    margin: 0;
+    container-type: inline-size;
     width: 100%;
 }
 
@@ -199,6 +199,7 @@
 
 .cert-wish {
     font-size: 1.05rem;
+    margin-top: 25px !important;
 }
 
 .cert-footer {
@@ -234,8 +235,10 @@
     bottom: 0px; /* Moved slightly down from 10px */
     left: 50%;
     transform: translateX(-50%);
-    height: 135px;
-    width: 360px;
+    height: auto;
+    max-height: 135px;
+    width: 100%;
+    max-width: 360px;
     object-fit: contain;
     mix-blend-mode: multiply;
     /* This filter transforms the blue ink into a vibrant official red */
@@ -430,9 +433,238 @@
 }
 
 @media (max-width: 850px) {
-    .certificate-frame { padding: 30px 20px; }
-    .cert-header h1 { font-size: 2.5rem; }
-    .cert-name { font-size: 3rem; padding: 0 20px; }
-    .cert-footer { flex-direction: column; gap: 40px; }
-    .footer-left, .footer-right { width: 100%; }
+    .verify-page {
+        padding: 1.5rem 0.5rem;
+    }
+    .verify-card {
+        padding: 8px;
+    }
+    .certificate-frame { 
+        padding: 35px 15px; 
+    }
+    .cert-header h1 { 
+        font-size: 2.6rem; 
+    }
+    .cert-name { 
+        font-size: clamp(1.8rem, 9cqi, 2.8rem); 
+        padding: 0 10px;
+        white-space: normal;
+        margin-bottom: 25px !important;
+    }
+    .cert-footer { 
+        flex-direction: column; 
+        gap: 40px; 
+        margin-top: 30px;
+        padding: 0 10px;
+    }
+    .footer-left, .footer-right { 
+        width: 100%; 
+        max-width: 280px;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 600px) {
+    .certificate-frame {
+        padding: 25px 10px;
+    }
+    .certificate-frame::after {
+        top: 6px; left: 6px; right: 6px; bottom: 6px;
+        border-width: 4px;
+    }
+    .certificate-frame::before {
+        top: 3px; left: 3px; right: 3px; bottom: 3px;
+    }
+    .corner {
+        width: 25px;
+        height: 25px;
+    }
+    .corner-tl { top: 12px; left: 12px; }
+    .corner-tr { top: 12px; right: 12px; }
+    .corner-bl { bottom: 12px; left: 12px; }
+    .corner-br { bottom: 12px; right: 12px; }
+
+    .cert-header h1 {
+        font-size: 1.8rem;
+        letter-spacing: 0.05em;
+    }
+    .cert-sub-title {
+        font-size: 0.7rem;
+        letter-spacing: 0.2em;
+    }
+    .cert-medal-wrap {
+        width: 50px;
+        margin-bottom: 20px;
+    }
+    .cert-logo-badge {
+        width: 45px;
+        height: 45px;
+    }
+    .cert-ribbon {
+        width: 25px;
+        height: 60px;
+    }
+    .cert-main-content p {
+        font-size: 0.95rem !important;
+        line-height: 1.6 !important;
+        margin-bottom: 12px !important;
+    }
+    .cert-wish {
+        margin-top: 15px !important;
+    }
+    .cert-text {
+        font-size: 0.8rem !important;
+        margin-bottom: 15px !important;
+    }
+    .cert-id-tag {
+        position: static;
+        margin-top: 25px;
+        text-align: center;
+        width: 100%;
+        font-size: 0.65rem;
+    }
+    .cert-seal-overlap {
+        width: 90px;
+        height: 90px;
+        top: -70px;
+    }
+    .signature-img {
+        max-width: 240px;
+    }
+}
+
+@media (max-width: 400px) {
+    .cert-header h1 {
+        font-size: 1.5rem;
+    }
+    .cert-name {
+        font-size: 1.8rem;
+    }
+    .btn-print-cert {
+        padding: 0.9rem 1.2rem;
+        font-size: 0.85rem;
+    }
+    .qr-code-canvas {
+        width: 70px !important;
+        height: 70px !important;
+    }
+}
+
+/* Mobile Popup Styles */
+.mobile-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+.mobile-popup-card {
+    background: white;
+    width: 100%;
+    max-width: 320px;
+    padding: 40px 30px 30px;
+    border-radius: 24px;
+    position: relative;
+    text-align: center;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.popup-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #f1f5f9;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #64748b;
+    transition: all 0.2s;
+}
+
+.popup-close:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.popup-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));
+}
+
+.mobile-popup-card h3 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 10px;
+}
+
+.mobile-popup-card p {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    color: #64748b;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.popup-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.btn-popup-download {
+    background: #1e293b;
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-popup-download:active {
+    transform: scale(0.98);
+}
+
+.btn-popup-view {
+    background: transparent;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    padding: 14px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
