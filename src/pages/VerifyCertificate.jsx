@@ -40,13 +40,18 @@ export default function VerifyCertificate() {
 
     useEffect(() => {
         const fetchCertificate = async () => {
-            console.log("Fetching certificate for ID:", id);
+            if (!id) return;
+            
+            // 🛡️ SECURITY: Sanitize the ID to prevent any injection attempt
+            const cleanId = id.replace(/[^a-zA-Z0-9-]/g, '').trim();
+            
+            console.log("Fetching certificate for ID:", cleanId);
             setLoading(true);
             try {
                 const { data, error: fetchError } = await supabase
                     .from('certificates')
                     .select('*')
-                    .eq('certificate_id', id)
+                    .eq('certificate_id', cleanId)
                     .single();
 
                 if (fetchError) {
@@ -197,20 +202,17 @@ export default function VerifyCertificate() {
                 </div>
             </div>
 
-            {/* Mobile Download Suggestion Popup */}
+            {/* Mobile View Suggestion Popup */}
             {showMobilePopup && (
                 <div className="mobile-popup-overlay">
                     <div className="mobile-popup-card">
                         <button className="popup-close" onClick={dismissPopup}>&times;</button>
-                        <div className="popup-icon">📄</div>
-                        <h3>Better Experience</h3>
-                        <p>For the best viewing experience, we recommend downloading the official PDF certificate.</p>
+                        <div className="popup-icon">🖥️</div>
+                        <h3>Better Visibility</h3>
+                        <p>For better visibility, kindly turn on your desktop mode.</p>
                         <div className="popup-actions">
-                            <button className="btn-popup-download" onClick={handleDownload}>
-                                Download PDF
-                            </button>
-                            <button className="btn-popup-view" onClick={dismissPopup}>
-                                Just View
+                            <button className="btn-popup-download" onClick={dismissPopup}>
+                                Got it
                             </button>
                         </div>
                     </div>

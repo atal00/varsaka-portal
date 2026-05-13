@@ -52,10 +52,35 @@ function AnimationTrigger() {
   return null;
 }
 
+// 🛡️ Security Guard: Protected Route
+function ProtectedRoute({ children }) {
+  const navigate = useNavigate();
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/login', { replace: true });
+      } else {
+        setIsAuthorized(true);
+      }
+      setChecking(false);
+    };
+    checkAuth();
+  }, [navigate]);
+
+  if (checking) return <div style={{height: '100vh', background: 'var(--bg-white)'}} />;
+  return isAuthorized ? children : null;
+}
+
 export default function App() {
   useEffect(() => {
     // 🛡️ THE GREAT WALL: Anti-Hacker Protection
     const block = (e) => e.preventDefault();
+    
+    // Disable Right Click
     document.addEventListener('contextmenu', block);
 
     const keyBlock = (e) => {
@@ -63,8 +88,9 @@ export default function App() {
       if (
         e.keyCode === 123 || 
         (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || 
-        (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 70)) || // F is find
-        (e.metaKey && e.shiftKey && e.keyCode === 73) // Mac support
+        (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 70)) || 
+        (e.metaKey && e.shiftKey && e.keyCode === 73) || // Mac support
+        (e.metaKey && e.altKey && e.keyCode === 73) // Safari support
       ) {
         e.preventDefault();
         return false;
@@ -77,10 +103,11 @@ export default function App() {
     
     // 🛡️ Prevent Console Logging in Production
     if (import.meta.env.PROD) {
-      console.log = () => {};
-      console.warn = () => {};
-      console.error = () => {};
-      console.info = () => {};
+      const noop = () => {};
+      Object.defineProperty(window.console, 'log', { value: noop, writable: false });
+      Object.defineProperty(window.console, 'warn', { value: noop, writable: false });
+      Object.defineProperty(window.console, 'error', { value: noop, writable: false });
+      Object.defineProperty(window.console, 'info', { value: noop, writable: false });
     }
 
     return () => {
@@ -94,13 +121,11 @@ export default function App() {
     <HelmetProvider>
       <BrowserRouter>
         <AnimationTrigger />
-        
-        {/* Global Scroll Trigger */}
         <ScrollTop />
 
         <Suspense fallback={<div style={{height: '100vh', background: 'var(--bg-white)'}} />}>
           <Routes>
-            {/* Public Pages with Nav/Footer */}
+            {/* Public Pages */}
             <Route path="/" element={<><Navbar /><Home /><Chatbot /><Footer /></>} />
             <Route path="/about" element={<><Navbar /><About /><Footer /></>} />
             <Route path="/blog" element={<><Navbar /><Blog /><Footer /></>} />
@@ -113,11 +138,11 @@ export default function App() {
             <Route path="/nda-template" element={<><Navbar /><NdaTemplate /><Footer /></>} />
             <Route path="/verify/:id" element={<VerifyCertificate />} />
             
-            {/* Portal Pages */}
+            {/* Portal Pages (Protected) */}
             <Route path="/login" element={<Login />} />
-            <Route path="/portal" element={<Portal />} />
+            <Route path="/portal" element={<ProtectedRoute><Portal /></ProtectedRoute>} />
 
-            {/* Service Detail Pages */}
+            {/* Service Pages */}
             <Route path="/services/functional-testing" element={<><Navbar /><FunctionalTesting /><Footer /></>} />
             <Route path="/services/automation-testing" element={<><Navbar /><AutomationTesting /><Footer /></>} />
             <Route path="/services/performance-testing" element={<><Navbar /><PerformanceTesting /><Footer /></>} />
