@@ -4,7 +4,7 @@ import { supabase } from '../supabaseClient';
 import { sanitize } from '../utils/security';
 import './Chatbot.css';
 
-const FS_TARGET = import.meta.env.VITE_FORMSUBMIT_URL;
+const FS_TARGET = import.meta.env.VITE_FORMSUBMIT_URL || 'https://formsubmit.co/ajax/abhishek@ai.varsaka.com';
 
 const INITIAL_MSGS = [{ from: 'bot', text: "Hi there! 👋 I'm the Varsaka Labs assistant. How can I help you today?", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }];
 
@@ -132,7 +132,7 @@ export default function Chatbot() {
       // 🛡️ Log submission time for security
       localStorage.setItem('varsaka_last_sub', Date.now().toString());
 
-      const gsUrl = import.meta.env.VITE_GS_SYNC_URL;
+      const gsUrl = import.meta.env.VITE_GS_SYNC_URL || 'https://script.google.com/macros/s/AKfycbyw7GZnCMwqeGRViy3a9TFJzRCDKpEAWoJyjquGyC4c7dQOaHFP6uOnmVgPXNxhim46/exec';
       if (gsUrl) {
         fetch(gsUrl, {
           method: 'POST',

@@ -405,7 +405,7 @@ export default function Apply() {
         'Submitted At':            new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
       };
 
-      const careersEndpoint = import.meta.env.VITE_FORMSUBMIT_CAREERS_URL;
+      const careersEndpoint = import.meta.env.VITE_FORMSUBMIT_CAREERS_URL || 'https://formsubmit.co/ajax/career@in.varsaka.com';
 
       const res = await fetch(careersEndpoint, {
         method: 'POST',
@@ -423,7 +423,7 @@ export default function Apply() {
       localStorage.removeItem('application_draft');
     } catch (err) {
       console.error(err);
-      alert('Error submitting application. Please try again.');
+      alert(`Error submitting application: ${err.message || err}. Please try again.`);
     } finally {
       setSubmitting(false);
     }

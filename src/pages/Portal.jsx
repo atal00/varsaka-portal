@@ -537,7 +537,7 @@ export default function Portal() {
       triggerInfo('Failed to delete from DB: ' + deleteError.message);
     } else {
       // --- GOOGLE SHEET SYNC (DELETE) ---
-      const gsUrl = import.meta.env.VITE_GS_SYNC_URL;
+      const gsUrl = import.meta.env.VITE_GS_SYNC_URL || 'https://script.google.com/macros/s/AKfycbyw7GZnCMwqeGRViy3a9TFJzRCDKpEAWoJyjquGyC4c7dQOaHFP6uOnmVgPXNxhim46/exec';
       if (gsUrl) {
         fetch(gsUrl, {
           method: 'POST',
@@ -576,7 +576,7 @@ export default function Portal() {
       
       // 🛡️ GATED APPROVAL: Only sync to GS if Admin is adding it directly.
       // Employee leads wait for Admin Approval.
-      const gsUrl = import.meta.env.VITE_GS_SYNC_URL;
+      const gsUrl = import.meta.env.VITE_GS_SYNC_URL || 'https://script.google.com/macros/s/AKfycbyw7GZnCMwqeGRViy3a9TFJzRCDKpEAWoJyjquGyC4c7dQOaHFP6uOnmVgPXNxhim46/exec';
       if (!isStaff && gsUrl) {
         fetch(gsUrl, {
           method: 'POST',
@@ -605,7 +605,7 @@ export default function Portal() {
     }
     const { error } = await supabase.from('leads').update({ status: 'new' }).eq('id', lead.id);
     
-    const gsUrl = import.meta.env.VITE_GS_SYNC_URL;
+    const gsUrl = import.meta.env.VITE_GS_SYNC_URL || 'https://script.google.com/macros/s/AKfycbyw7GZnCMwqeGRViy3a9TFJzRCDKpEAWoJyjquGyC4c7dQOaHFP6uOnmVgPXNxhim46/exec';
     if (!error && gsUrl) {
       // 🚀 SYNC TO GOOGLE SHEETS ONLY ON APPROVAL
       fetch(gsUrl, {

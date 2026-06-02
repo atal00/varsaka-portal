@@ -63,8 +63,8 @@ const ALL_COUNTRIES = [
   { name: 'Zambia', code: '+260', flag: '🇿🇲' }, { name: 'Zimbabwe', code: '+263', flag: '🇿🇼' }
 ];
 
-const FS_TARGET = import.meta.env.VITE_FORMSUBMIT_URL;
-const GS_TARGET = import.meta.env.VITE_GS_SYNC_URL;
+const FS_TARGET = import.meta.env.VITE_FORMSUBMIT_URL || 'https://formsubmit.co/ajax/abhishek@ai.varsaka.com';
+const GS_TARGET = import.meta.env.VITE_GS_SYNC_URL || 'https://script.google.com/macros/s/AKfycbyw7GZnCMwqeGRViy3a9TFJzRCDKpEAWoJyjquGyC4c7dQOaHFP6uOnmVgPXNxhim46/exec';
 
 function useFadeIn() {
   useEffect(() => {
