@@ -206,7 +206,10 @@ export default function Apply() {
           if (draft.formState) setFormState(draft.formState);
           if (draft.skills) setSelectedSkills(new Set(draft.skills));
           if (draft.customSkills) setCustomSkills(draft.customSkills);
-          if (draft.uploadedFile) setUploadedFile({ name: draft.uploadedFile.name, size: draft.uploadedFile.size, file: null });
+          // Note: We intentionally do not restore the resume draft file state, 
+          // because the actual File object content is not stored in localStorage 
+          // (browser sandbox limitation). This forces the user to re-upload the 
+          // physical file to ensure it actually gets uploaded on submit.
         }, 0);
       } catch (e) {
         console.error('Error loading application draft: ', e);
@@ -293,7 +296,7 @@ export default function Apply() {
       const isSkillsValid = selectedSkills.size >= 2;
       newErrors.skills = !isSkillsValid;
 
-      const isResumeValid = uploadedFile !== null;
+      const isResumeValid = uploadedFile !== null && uploadedFile.file !== null;
       newErrors.resume = !isResumeValid;
 
       isValid = isSkillsValid && isResumeValid;
