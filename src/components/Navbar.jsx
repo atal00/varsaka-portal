@@ -25,7 +25,7 @@ export default function Navbar() {
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
   const closeMenu = () => setMenuOpen(false);
 
-  const handleHomeClick = (e) => {
+  const handleHomeClick = () => {
     closeMenu();
     if (location.pathname === '/') {
       window.scrollTo({ top: 0, behavior: 'smooth' });

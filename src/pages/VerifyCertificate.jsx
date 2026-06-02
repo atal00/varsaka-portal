@@ -196,7 +196,7 @@ export default function VerifyCertificate() {
                 </main>
 
                 <div className="btn-print-wrap" style={{textAlign:'center'}}>
-                    <button className="btn-print-cert" onClick={() => window.print()}>
+                    <button className="btn-print-cert" onClick={handleDownload}>
                         📥 Download Official Certificate (PDF)
                     </button>
                 </div>

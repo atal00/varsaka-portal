@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import logo from '../assets/logo.png';
 import { supabase } from '../supabaseClient';
 import './Login.css';
 
@@ -38,8 +37,11 @@ export default function Login() {
   };
 
   useEffect(() => {
-    generateCaptcha();
-    setError(''); // Clear any errors when switching tabs
+    setTimeout(() => {
+      generateCaptcha();
+      setError(''); // Clear any errors when switching tabs
+    }, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role]);
 
   useEffect(() => {
@@ -49,8 +51,10 @@ export default function Login() {
 
   useEffect(() => {
     if (attempts >= 3) {
-      setIsLocked(true);
-      setError('Too many failed attempts. Locked for 30 seconds.');
+      setTimeout(() => {
+        setIsLocked(true);
+        setError('Too many failed attempts. Locked for 30 seconds.');
+      }, 0);
       const timer = setTimeout(() => {
         setIsLocked(false);
         setAttempts(0);

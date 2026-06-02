@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import { sanitize } from '../utils/security';
 import './Chatbot.css';
 
 const FS_TARGET = import.meta.env.VITE_FORMSUBMIT_URL;
-const GS_TARGET = import.meta.env.VITE_GS_SYNC_URL;
 
 const INITIAL_MSGS = [{ from: 'bot', text: "Hi there! 👋 I'm the Varsaka Labs assistant. How can I help you today?", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }];
 
@@ -43,7 +43,7 @@ export default function Chatbot() {
   const [isVerifyingHuman, setIsVerifyingHuman] = useState(false);
   const [pendingLead, setPendingLead] = useState(null);
   const [verificationMath, setVerificationMath] = useState({ a: 0, b: 0 });
-  const [botStartTime] = useState(Date.now());
+  const [botStartTime] = useState(() => Date.now());
   const bodyRef = useRef(null);
 
   const addMsg = (text, from) => {
@@ -123,9 +123,9 @@ export default function Chatbot() {
       
       await supabase.from('leads').insert([{
         name: 'Advanced Bot Lead',
-        email: extractedEmail,
+        email: sanitize(extractedEmail),
         service: 'Bot Consultation',
-        message: `[Context: ${userContext}] | [Lead Info: ${text}]`,
+        message: `[Context: ${sanitize(userContext)}] | [Lead Info: ${sanitize(text)}]`,
         source: 'AI Chatbot' 
       }]);
 

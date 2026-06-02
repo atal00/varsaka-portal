@@ -19,7 +19,26 @@ function useFadeIn() {
   }, []);
 }
 
+const isDeadlinePassed = (closesStr) => {
+  if (!closesStr) return false;
+  const deadline = new Date(closesStr);
+  deadline.setHours(23, 59, 59, 999);
+  return new Date() > deadline;
+};
+
 const jobs = [
+  {
+    icon: '🎓',
+    title: '2026 Cohort Internship Program',
+    location: 'Remote / Hybrid (SF / Bangalore)',
+    type: 'Internship',
+    exp: 'Students / Grads',
+    tags: ['Tech', 'HR', 'Finance', 'Design', 'Management'],
+    desc: 'Join our intensive 12-week program. Open to all disciplines (Tech, HR, Finance, Design, Marketing, and Operations). Work on real projects, receive 1-on-1 mentorship, and accelerate your career.',
+    posted: '2 Jun 2026',
+    closes: '30 Jun 2026',
+    applyLink: '/apply?role=General+Application',
+  },
   {
     icon: '🤖',
     title: 'Senior QA Automation Engineer',
@@ -28,8 +47,6 @@ const jobs = [
     exp: '3+ Years',
     tags: ['Selenium', 'Playwright', 'Cypress', 'CI/CD'],
     desc: 'Lead the design and implementation of end-to-end automation frameworks. You\'ll own the test architecture, mentor junior engineers, and work closely with dev teams to shift quality left.',
-    posted: '1 May 2026',
-    closes: '31 May 2026',
     posted: '1 May 2026',
     closes: '31 May 2026',
     applyLink: '/apply?role=Senior+QA+Automation+Engineer',
@@ -114,7 +131,7 @@ export default function Careers() {
         </div>
 
         <div className="jobs-grid">
-          {jobs.map((j, i) => (
+          {jobs.map(j => (
             <div key={j.title} className="job-card fade-in">
               <div className="job-card-top">
                 <div className="job-icon">{j.icon}</div>
@@ -137,12 +154,16 @@ export default function Careers() {
               <div className="job-dates">
                 <span className="job-date-item">📅 Posted: <strong>{j.posted}</strong></span>
                 <span className="job-date-sep">·</span>
-                <span className="job-date-item job-date-closes">⏳ Application Deadline: <strong>{j.closes}</strong></span>
+                <span className="job-date-item job-date-closes">
+                  ⏳ Application Deadline: <strong style={isDeadlinePassed(j.closes) ? { color: '#ef4444' } : {}}>{j.closes}{isDeadlinePassed(j.closes) && ' (Passed)'}</strong>
+                </span>
               </div>
 
-              <Link to={j.applyLink} className="job-apply-btn">
-                Apply Now <span className="job-apply-arrow"><i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></span>
-              </Link>
+              {!isDeadlinePassed(j.closes) && (
+                <Link to={j.applyLink} className="job-apply-btn">
+                  Apply Now <span className="job-apply-arrow"><i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></span>
+                </Link>
+              )}
             </div>
           ))}
         </div>

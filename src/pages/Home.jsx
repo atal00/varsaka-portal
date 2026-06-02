@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import './Home.css';
@@ -130,7 +130,9 @@ export default function Home() {
   };
 
   useEffect(() => {
-    generateCaptcha();
+    setTimeout(() => {
+      generateCaptcha();
+    }, 0);
   }, []);
 
   const [faqOpen, setFaqOpen] = useState(null);

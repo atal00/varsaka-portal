@@ -74,17 +74,31 @@ const PROJECT_SUGGESTIONS = {
   'Finance Intern': ['Accounts Reconciliation System', 'Budget Variance Analysis', 'Tax Compliance Reporting', 'Expense Tracking Dashboard', 'Financial Projection Modeling']
 };
 
+const CONGRATS_MESSAGES = [
+  "🚀 Boom! Admin just approved your lead! Let's crush it!",
+  "✅ Great job! Your submission has been given the green light!",
+  "🌟 Outstanding! Admin loved your lead and it's now live!",
+  "💪 Success! Another project added to your list. Keep it up!",
+  "🔥 You're on fire! Your latest lead was just approved!"
+];
+
+const ASSIGNMENT_MESSAGES = [
+  "💼 New Task Alert! Admin has picked you for a new project. Let's go!",
+  "🎯 You've been chosen! A new lead is waiting for your expertise.",
+  "🚀 Ready for a new challenge? You've just been assigned a task!",
+  "🌟 Congratulations! Admin has entrusted you with this new inquiry.",
+  "📈 Fresh Assignment! A new project is now under your care."
+];
+
 export default function Portal() {
   const [session, setSession] = useState(null);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [showTeam, setShowTeam] = useState(false);
   const [staffList, setStaffList] = useState([]);
-  const [inviteData, setInviteData] = useState({ email: '', name: '' });
-  const [inviting, setInviting] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [infoMsg, setInfoMsg] = useState('');
   const [infoIcon, setInfoIcon] = useState({ url: 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f6e1_fe0f/512.gif', fallback: '🛡️' });
@@ -101,7 +115,7 @@ export default function Portal() {
   const triggerInfo = (msg) => {
     if (showInfoModal) return; // 🛡️ Prevent rapid-fire clicks/Enter key spam
     setInfoMsg(msg);
-    const iconObj = INFO_ICONS[Math.floor(Math.random() * INFO_ICONS.length)];
+    const iconObj = INFO_ICONS[msg.length % INFO_ICONS.length];
     setInfoIcon(iconObj);
     setShowInfoModal(true);
   };
@@ -118,20 +132,6 @@ export default function Portal() {
 
   // Celebration System
   const [celebration, setCelebration] = useState(null);
-  const congratsMessages = [
-    "🚀 Boom! Admin just approved your lead! Let's crush it!",
-    "✅ Great job! Your submission has been given the green light!",
-    "🌟 Outstanding! Admin loved your lead and it's now live!",
-    "💪 Success! Another project added to your list. Keep it up!",
-    "🔥 You're on fire! Your latest lead was just approved!"
-  ];
-  const assignmentMessages = [
-    "💼 New Task Alert! Admin has picked you for a new project. Let's go!",
-    "🎯 You've been chosen! A new lead is waiting for your expertise.",
-    "🚀 Ready for a new challenge? You've just been assigned a task!",
-    "🌟 Congratulations! Admin has entrusted you with this new inquiry.",
-    "📈 Fresh Assignment! A new project is now under your care."
-  ];
 
   // Modal States for new features
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -178,102 +178,13 @@ export default function Portal() {
       // Pad to 3 digits (e.g. 001, 015, 120)
       const paddedNum = nextNum.toString().padStart(3, '0');
       
-      setNewIntern(prev => ({ ...prev, cert_num: paddedNum }));
+      setTimeout(() => {
+        setNewIntern(prev => ({ ...prev, cert_num: paddedNum }));
+      }, 0);
     }
   }, [newIntern.cert_year, showAddIntern, interns]);
 
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const validateSession = async () => {
-      const s = sessionStorage.getItem('varsaka_user');
-      if (!s) {
-        navigate('/login');
-        return;
-      }
-
-      const sessionUser = JSON.parse(s);
-
-      // 🛡️ SECURITY FIX 1: Cryptographic Session Validation
-      // Do not trust sessionStorage blindly. Verify with Supabase backend.
-      const { data: { user }, error } = await supabase.auth.getUser();
-      
-      if (error || !user) {
-        console.error("Auth validation failed:", error);
-        sessionStorage.removeItem('varsaka_user');
-        navigate('/login');
-        return;
-      }
-
-      // 🛡️ SECURITY FIX 2: Privilege Escalation Prevention
-      // Check if user spoofed their role in sessionStorage
-      const realRole = user.user_metadata?.role || 'employee';
-      const fullName = user.user_metadata?.full_name || user.email.split('@')[0];
-
-      const verifiedSession = {
-        id: user.id,
-        name: fullName,
-        role: realRole,
-        email: user.email
-      };
-
-      setSession(verifiedSession);
-      // Wait for session state to update before fetching data
-    };
-
-    validateSession();
-  }, [navigate]);
-
-  // Fetch data only after session is validated and set
-  useEffect(() => {
-    if (session) {
-      fetchData();
-      fetchStaff();
-      const interval = setInterval(fetchData, 60000);
-      return () => clearInterval(interval);
-    }
-  }, [session]);
-
-  // 🔔 Post-Login Notification
-  useEffect(() => {
-    if (session && !sessionStorage.getItem('notified_refresh')) {
-      triggerInfo('Welcome back! Kindly refresh from the top button to see the latest leads.');
-      sessionStorage.setItem('notified_refresh', 'true');
-    }
-  }, [session]);
-
-  // 🧹 BACKGROUND CLEANUP: Auto-delete rejected leads after 60 mins
-  useEffect(() => {
-    const cleanup = async () => {
-      const now = new Date();
-      const sixtyMinsAgo = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
-      
-      const { data: expired } = await supabase
-        .from('leads')
-        .select('id')
-        .eq('status', 'rejected')
-        .lt('rejected_at', sixtyMinsAgo);
-
-      if (expired && expired.length > 0) {
-        const ids = expired.map(e => e.id);
-        await supabase.from('leads').delete().in('id', ids);
-        fetchData();
-      }
-    };
-
-    const timer = setInterval(cleanup, 60000); // Check every minute
-    return () => clearInterval(timer);
-  }, [data]);
-
-  // ⌨️ Modal Accessibility: Focus the button when modal opens
-  useEffect(() => {
-    if (showInfoModal) {
-      setTimeout(() => {
-        const btn = document.getElementById('btn-info-close');
-        if (btn) btn.focus();
-      }, 50);
-    }
-  }, [showInfoModal]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -307,7 +218,7 @@ export default function Portal() {
         source: l.source || 'Unknown' // 👈 Map source
       })));
 
-        // 🎊 Celebration Check (Only for Employee)
+      // 🎊 Celebration Check (Only for Employee)
       if (session.role === 'employee') {
         // 1. Check for newly approved leads
         const newlyApproved = leads.find(l => 
@@ -317,7 +228,7 @@ export default function Portal() {
         );
 
         if (newlyApproved) {
-          const msg = congratsMessages[Math.floor(Math.random() * congratsMessages.length)];
+          const msg = CONGRATS_MESSAGES[Math.floor(Math.random() * CONGRATS_MESSAGES.length)];
           setCelebration({ name: newlyApproved.name, message: msg, type: 'approval' });
           localStorage.setItem(`celebrated_${newlyApproved.id}`, 'true');
         } 
@@ -331,7 +242,7 @@ export default function Portal() {
           );
 
           if (newlyAssigned) {
-            const msg = assignmentMessages[Math.floor(Math.random() * assignmentMessages.length)];
+            const msg = ASSIGNMENT_MESSAGES[Math.floor(Math.random() * ASSIGNMENT_MESSAGES.length)];
             setCelebration({ name: newlyAssigned.name, message: msg, type: 'assignment' });
             localStorage.setItem(`assigned_notified_${newlyAssigned.id}`, 'true');
           }
@@ -370,8 +281,109 @@ export default function Portal() {
     setLoadingInterns(false);
   };
 
+  useEffect(() => {
+    const validateSession = async () => {
+      const s = sessionStorage.getItem('varsaka_user');
+      if (!s) {
+        navigate('/login');
+        return;
+      }
+
+      // 🛡️ SECURITY FIX 1: Cryptographic Session Validation
+      // Do not trust sessionStorage blindly. Verify with Supabase backend.
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
+      if (error || !user) {
+        console.error("Auth validation failed:", error);
+        sessionStorage.removeItem('varsaka_user');
+        navigate('/login');
+        return;
+      }
+
+      // 🛡️ SECURITY FIX 2: Privilege Escalation Prevention
+      // Check if user spoofed their role in sessionStorage
+      const realRole = user.user_metadata?.role || 'employee';
+      const fullName = user.user_metadata?.full_name || user.email.split('@')[0];
+
+      const verifiedSession = {
+        id: user.id,
+        name: fullName,
+        role: realRole,
+        email: user.email
+      };
+
+      setSession(verifiedSession);
+      // Wait for session state to update before fetching data
+    };
+
+    validateSession();
+  }, [navigate]);
+
+  // Fetch data only after session is validated and set
+  useEffect(() => {
+    if (session) {
+      setTimeout(() => {
+        fetchData();
+        fetchStaff();
+      }, 0);
+      const interval = setInterval(fetchData, 60000);
+      return () => clearInterval(interval);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
+
+  // 🔔 Post-Login Notification
+  useEffect(() => {
+    if (session && !sessionStorage.getItem('notified_refresh')) {
+      setTimeout(() => {
+        triggerInfo('Welcome back! Kindly refresh from the top button to see the latest leads.');
+      }, 0);
+      sessionStorage.setItem('notified_refresh', 'true');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
+
+  // 🧹 BACKGROUND CLEANUP: Auto-delete rejected leads after 60 mins
+  useEffect(() => {
+    const cleanup = async () => {
+      const now = new Date();
+      const sixtyMinsAgo = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
+      
+      const { data: expired } = await supabase
+        .from('leads')
+        .select('id')
+        .eq('status', 'rejected')
+        .lt('rejected_at', sixtyMinsAgo);
+
+      if (expired && expired.length > 0) {
+        const ids = expired.map(e => e.id);
+        await supabase.from('leads').delete().in('id', ids);
+        fetchData();
+      }
+    };
+
+    const timer = setInterval(cleanup, 60000); // Check every minute
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
+
+  // ⌨️ Modal Accessibility: Focus the button when modal opens
+  useEffect(() => {
+    if (showInfoModal) {
+      setTimeout(() => {
+        const btn = document.getElementById('btn-info-close');
+        if (btn) btn.focus();
+      }, 50);
+    }
+  }, [showInfoModal]);
+
+
+
   const addIntern = async (e) => {
     e.preventDefault();
+    if (session?.role !== 'admin') {
+      return triggerInfo('Error: Only Admins can add certificates.');
+    }
     if (!newIntern.full_name || !newIntern.cert_num || !newIntern.start_date || !newIntern.end_date) {
       return triggerInfo('Please fill in all required fields (Name, Serial Number, and Dates)');
     }
@@ -425,6 +437,10 @@ export default function Portal() {
   };
 
   const deleteIntern = async (id) => {
+    if (session?.role !== 'admin') {
+      triggerInfo('Error: Only Admins can delete intern records.');
+      return;
+    }
     if (!window.confirm('Are you sure you want to delete this intern record?')) return;
     const { error } = await supabase.from('certificates').delete().eq('id', id);
     if (error) triggerInfo('Delete failed: ' + error.message);
@@ -438,6 +454,10 @@ export default function Portal() {
   };
 
   const assignTask = async (leadId, staffId) => {
+    if (session?.role !== 'admin') {
+      triggerInfo('Error: Only Admins can assign tasks.');
+      return;
+    }
     const { error: updateError } = await supabase
       .from('leads')
       .update({ assigned_to: staffId || null })
@@ -448,13 +468,14 @@ export default function Portal() {
     } else fetchData();
   };
 
-  const inviteStaff = (e) => {
-    e.preventDefault();
-    triggerInfo('Kindly connect with your super admin to add or delete any employee.');
-  };
+
 
   const updateStaffName = async (sid, newName) => {
     if (!newName) return;
+    if (session?.role !== 'admin' && sid !== session?.id) {
+      triggerInfo('Error: You can only update your own profile name.');
+      return;
+    }
     await supabase.from('profiles').update({ full_name: newName }).eq('id', sid);
     fetchStaff();
   };
@@ -465,6 +486,13 @@ export default function Portal() {
   };
 
   const updateStatus = async (id, val) => {
+    if (session?.role === 'employee') {
+      const lead = data.find(r => r.id === id);
+      if (!lead || lead.assigned_to !== session.id) {
+        triggerInfo('Error: You can only update leads assigned to you.');
+        return;
+      }
+    }
     const { error: updateError } = await supabase.from('leads').update({ status: val }).eq('id', id);
     if (updateError) {
       triggerInfo('Failed to update status: ' + updateError.message);
@@ -476,6 +504,13 @@ export default function Portal() {
   };
 
   const saveNoteToDB = async (id, text) => {
+    if (session?.role === 'employee') {
+      const lead = data.find(r => r.id === id);
+      if (!lead || lead.assigned_to !== session.id) {
+        console.warn('Block: Attempted to edit notes on unassigned lead.');
+        return;
+      }
+    }
     const { error: updateError } = await supabase.from('leads').update({ notes: text }).eq('id', id);
     if (updateError) console.error('Auto-save failed:', updateError.message);
   };
@@ -489,6 +524,10 @@ export default function Portal() {
   };
 
   const confirmDelete = async () => {
+    if (session?.role !== 'admin') {
+      triggerInfo('Error: Only Admins can delete leads.');
+      return;
+    }
     if (!deleteTarget) return;
     const { id, email } = deleteTarget;
     
@@ -560,6 +599,10 @@ export default function Portal() {
   };
 
   const approveLead = async (lead) => {
+    if (session?.role !== 'admin') {
+      triggerInfo('Error: Only Admins can approve leads.');
+      return;
+    }
     const { error } = await supabase.from('leads').update({ status: 'new' }).eq('id', lead.id);
     
     const gsUrl = import.meta.env.VITE_GS_SYNC_URL;
@@ -583,6 +626,9 @@ export default function Portal() {
   };
 
   const exportToCSV = () => {
+    if (session?.role !== 'admin') {
+      return triggerInfo('Error: Only Admins can export data.');
+    }
     if (data.length === 0) {
       return triggerInfo('No data to export!');
     }
@@ -612,6 +658,10 @@ export default function Portal() {
   };
 
   const rejectLead = async () => {
+    if (session?.role !== 'admin') {
+      triggerInfo('Error: Only Admins can reject leads.');
+      return;
+    }
     if (!rejectReason.trim()) return;
     await supabase.from('leads').update({ 
       status: 'rejected',
