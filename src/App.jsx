@@ -1,12 +1,14 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { HelmetProvider } from 'react-helmet-async';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Chatbot from './components/Chatbot';
 import ScrollTop from './components/ScrollTop';
 import Home from './pages/Home';
+import Preloader from './components/Preloader';
 
 // 🚀 Performance: Lazy Load non-critical pages
 const About = lazy(() => import('./pages/About'));
@@ -27,6 +29,8 @@ const MobileTesting = lazy(() => import('./pages/MobileTesting'));
 const Apply = lazy(() => import('./pages/Apply'));
 const BlogDetail = lazy(() => import('./pages/BlogDetail'));
 const VerifyCertificate = lazy(() => import('./pages/VerifyCertificate'));
+const Fake404 = lazy(() => import('./pages/Fake404'));
+const TimeBasedLogin = lazy(() => import('./pages/TimeBasedLogin'));
 import './index.css';
 
 function AnimationTrigger() {
@@ -53,27 +57,23 @@ function AnimationTrigger() {
   return null;
 }
 
-// 🛡️ Security Guard: Protected Route
-function ProtectedRoute({ children }) {
-  const navigate = useNavigate();
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [checking, setChecking] = useState(true);
+// 🛡️ Strict Security Guard: Protected Route via AuthContext
+function RequireAuth({ children, allowedRoles }) {
+  const { session, userRole, loading } = useAuth();
+  const location = useLocation();
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate('/login', { replace: true });
-      } else {
-        setIsAuthorized(true);
-      }
-      setChecking(false);
-    };
-    checkAuth();
-  }, [navigate]);
+  if (loading) return <div style={{height: '100vh', background: 'var(--bg-white)', color: 'black', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px'}}>LOADING AUTH...</div>;
+  
+  if (!session) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
 
-  if (checking) return <div style={{height: '100vh', background: 'var(--bg-white)'}} />;
-  return isAuthorized ? children : null;
+  if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
+    // Attempted Unauthorized Role Escalation
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
 }
 
 export default function App() {
@@ -120,7 +120,9 @@ export default function App() {
 
   return (
     <HelmetProvider>
-      <BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+        <Preloader />
         <AnimationTrigger />
         <ScrollTop />
 
@@ -140,8 +142,7 @@ export default function App() {
             <Route path="/verify/:id" element={<VerifyCertificate />} />
             
             {/* Portal Pages (Protected) */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/portal" element={<ProtectedRoute><Portal /></ProtectedRoute>} />
+            <Route path="/portal" element={<RequireAuth allowedRoles={['superadmin', 'admin', 'employee']}><Portal /></RequireAuth>} />
 
             {/* Service Pages */}
             <Route path="/services/functional-testing" element={<><Navbar /><FunctionalTesting /><Footer /></>} />
@@ -150,9 +151,15 @@ export default function App() {
             <Route path="/services/security-testing" element={<><Navbar /><SecurityTesting /><Footer /></>} />
             <Route path="/services/ai-powered-testing" element={<><Navbar /><AIPoweredTesting /><Footer /></>} />
             <Route path="/services/mobile-testing" element={<><Navbar /><MobileTesting /><Footer /></>} />
+            
+            {/* Dynamic Security & 404 Pages */}
+            <Route path="/404" element={<Fake404 />} />
+            <Route path="/:accessCode" element={<TimeBasedLogin />} />
+            <Route path="*" element={<Fake404 />} />
           </Routes>
         </Suspense>
       </BrowserRouter>
-    </HelmetProvider>
+    </AuthProvider>
+  </HelmetProvider>
   );
 }

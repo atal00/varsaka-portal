@@ -7,8 +7,12 @@ export default function Footer() {
     <footer className="site-footer">
       <div className="footer-grid">
         <div className="footer-brand">
-          <Link to="/" className="footer-logo">
-            <img src={logo} alt="Varsaka Labs Logo" style={{ height: 44, borderRadius: 6 }} />
+          <Link to="/" className="footer-logo" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', marginBottom: '1rem' }}>
+            <img src={logo} alt="Varsaka Logo" style={{ height: 44, borderRadius: 8 }} />
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <span style={{ fontSize: '1.45rem', fontWeight: '800', lineHeight: '1.1', color: 'var(--text)' }}>Varsaka</span>
+              <span style={{ fontSize: '0.65rem', fontWeight: '600', letterSpacing: '0.5px', color: '#94a3b8', textTransform: 'uppercase' }}>Quality Engineering</span>
+            </div>
           </Link>
           <p>Varsaka Labs is a progressive technology firm with expertise in Software Testing, Quality Engineering, and End-to-End Development Solutions.</p>
         </div>
@@ -32,7 +36,7 @@ export default function Footer() {
             <li><Link to="/careers">Careers</Link></li>
             <li><Link to="/blog">Blog</Link></li>
             <li><Link to="/case-studies">Case Studies</Link></li>
-            <li><Link to="/login" style={{ color: 'var(--blue-bright)', fontWeight: 600 }}>Employee Login</Link></li>
+
           </ul>
         </div>
 

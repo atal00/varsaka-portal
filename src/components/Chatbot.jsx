@@ -4,7 +4,7 @@ import { supabase } from '../supabaseClient';
 import { sanitize } from '../utils/security';
 import './Chatbot.css';
 
-const FS_TARGET = import.meta.env.VITE_FORMSUBMIT_URL || 'https://formsubmit.co/ajax/abhishek@ai.varsaka.com';
+const BACKEND_API = '/.netlify/functions/submitLead';
 
 const INITIAL_MSGS = [{ from: 'bot', text: "Hi there! 👋 I'm the Varsaka Labs assistant. How can I help you today?", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }];
 
@@ -45,6 +45,13 @@ export default function Chatbot() {
   const [verificationMath, setVerificationMath] = useState({ a: 0, b: 0 });
   const [botStartTime] = useState(() => Date.now());
   const bodyRef = useRef(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setTooltipDismissed(true);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const addMsg = (text, from) => {
     setMessages(prev => [...prev, { from, text, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
@@ -104,7 +111,7 @@ export default function Chatbot() {
     };
 
     try {
-      const res = await fetch(FS_TARGET, { 
+      const res = await fetch(BACKEND_API, { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, 
         body: JSON.stringify(payload) 

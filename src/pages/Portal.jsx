@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import logo from '../assets/logo.png';
 import { supabase } from '../supabaseClient';
+import { useAuth } from '../contexts/AuthContext';
 import { sanitize } from '../utils/security'; // 🛡️ Security Guard
 import './Portal.css';
 
@@ -91,12 +92,22 @@ const ASSIGNMENT_MESSAGES = [
 ];
 
 export default function Portal() {
-  const [session, setSession] = useState(null);
+  const { session: authSession, userRole, signOut } = useAuth();
+  
+  // Mimic old session object for minimal refactoring
+  const session = authSession ? {
+    id: authSession.user.id,
+    role: userRole,
+    name: authSession.user.user_metadata?.full_name || authSession.user.email?.split('@')[0] || 'User',
+    email: authSession.user.email
+  } : null;
+
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
+  const [activeTab, setActiveTab] = useState('Dashboard');
   const [showTeam, setShowTeam] = useState(false);
   const [staffList, setStaffList] = useState([]);
   const [showInfoModal, setShowInfoModal] = useState(false);
@@ -162,6 +173,97 @@ export default function Portal() {
   });
   const [addingIntern, setAddingIntern] = useState(false);
   
+  const [mockUsers, setMockUsers] = useState([]);
+
+  const [settingsTab, setSettingsTab] = useState('profile');
+  
+  // --- Generic Modal State for Mock CRUD ---
+  const [genericModal, setGenericModal] = useState({ isOpen: false, type: '', data: null });
+  const [mockServices, setMockServices] = useState([]);
+  const [mockBlogs, setMockBlogs] = useState([]);
+  const [mockTestimonials, setMockTestimonials] = useState([]);
+  const [mockFaqs, setMockFaqs] = useState([]);
+
+  const handleOpenGenericModal = (type, data = null) => {
+    setGenericModal({ isOpen: true, type, data });
+  };
+
+  const handleCloseGenericModal = () => {
+    setGenericModal({ isOpen: false, type: '', data: null });
+  };
+
+  const handleGenericSave = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const updates = Object.fromEntries(fd.entries());
+    
+    let table = '';
+    if (genericModal.type === 'Service') table = 'services';
+    else if (genericModal.type === 'Blog') table = 'blogs';
+    else if (genericModal.type === 'Testimonial') table = 'testimonials';
+    else if (genericModal.type === 'FAQ') table = 'faqs';
+    
+    // For users, it's more complex (Supabase Auth). We skip database modification for mocked users for now.
+    if (genericModal.type === 'User') {
+      if (genericModal.data) setMockUsers(mockUsers.map(s => s.id === genericModal.data.id ? {...s, ...updates} : s));
+      else setMockUsers([...mockUsers, { id: Date.now().toString(), lastLogin: 'Never', ...updates }]);
+      handleCloseGenericModal();
+      return;
+    }
+
+    try {
+      if (genericModal.data) {
+        const { error } = await supabase.from(table).update(updates).eq('id', genericModal.data.id);
+        if (error) throw error;
+        
+        if (table === 'services') setMockServices(mockServices.map(s => s.id === genericModal.data.id ? {...s, ...updates} : s));
+        if (table === 'blogs') setMockBlogs(mockBlogs.map(s => s.id === genericModal.data.id ? {...s, ...updates} : s));
+        if (table === 'testimonials') setMockTestimonials(mockTestimonials.map(s => s.id === genericModal.data.id ? {...s, ...updates} : s));
+        if (table === 'faqs') setMockFaqs(mockFaqs.map(s => s.id === genericModal.data.id ? {...s, ...updates} : s));
+      } else {
+        const { data, error } = await supabase.from(table).insert([updates]).select();
+        if (error) throw error;
+        
+        const newItem = data[0];
+        if (table === 'services') setMockServices([newItem, ...mockServices]);
+        if (table === 'blogs') setMockBlogs([newItem, ...mockBlogs]);
+        if (table === 'testimonials') setMockTestimonials([newItem, ...mockTestimonials]);
+        if (table === 'faqs') setMockFaqs([newItem, ...mockFaqs]);
+      }
+      handleCloseGenericModal();
+    } catch (err) {
+      alert(`Database Error: ${err.message}. Have you run the migrations.sql script?`);
+    }
+  };
+
+  const handleGenericDelete = async () => {
+    let table = '';
+    if (genericModal.type === 'Service') table = 'services';
+    else if (genericModal.type === 'Blog') table = 'blogs';
+    else if (genericModal.type === 'Testimonial') table = 'testimonials';
+    else if (genericModal.type === 'FAQ') table = 'faqs';
+
+    if (genericModal.type === 'User') {
+      setMockUsers(mockUsers.filter(s => s.id !== genericModal.data.id));
+      handleCloseGenericModal();
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from(table).delete().eq('id', genericModal.data.id);
+      if (error) throw error;
+
+      if (table === 'services') setMockServices(mockServices.filter(s => s.id !== genericModal.data.id));
+      if (table === 'blogs') setMockBlogs(mockBlogs.filter(s => s.id !== genericModal.data.id));
+      if (table === 'testimonials') setMockTestimonials(mockTestimonials.filter(s => s.id !== genericModal.data.id));
+      if (table === 'faqs') setMockFaqs(mockFaqs.filter(s => s.id !== genericModal.data.id));
+      
+      handleCloseGenericModal();
+    } catch (err) {
+      alert(`Database Error: ${err.message}. Have you run the migrations.sql script?`);
+    }
+  };
+
   // --- Smart ID Suggestion Logic ---
   useEffect(() => {
     if (showAddIntern && interns.length > 0) {
@@ -201,6 +303,24 @@ export default function Portal() {
       const { data: leads, error: fetchError } = await query;
       
       if (fetchError) throw fetchError;
+
+      // Fetch other data
+      const [
+        { data: sData },
+        { data: bData },
+        { data: tData },
+        { data: fData }
+      ] = await Promise.all([
+        supabase.from('services').select('*').order('created_at', { ascending: false }),
+        supabase.from('blogs').select('*').order('created_at', { ascending: false }),
+        supabase.from('testimonials').select('*').order('created_at', { ascending: false }),
+        supabase.from('faqs').select('*').order('created_at', { ascending: false })
+      ]);
+
+      if (sData) setMockServices(sData);
+      if (bData) setMockBlogs(bData);
+      if (tData) setMockTestimonials(tData);
+      if (fData) setMockFaqs(fData);
 
       setData(leads.map(l => ({
         id: l.id,
@@ -281,43 +401,7 @@ export default function Portal() {
     setLoadingInterns(false);
   };
 
-  useEffect(() => {
-    const validateSession = async () => {
-      const s = sessionStorage.getItem('varsaka_user');
-      if (!s) {
-        navigate('/login');
-        return;
-      }
-
-      // 🛡️ SECURITY FIX 1: Cryptographic Session Validation
-      // Do not trust sessionStorage blindly. Verify with Supabase backend.
-      const { data: { user }, error } = await supabase.auth.getUser();
-      
-      if (error || !user) {
-        console.error("Auth validation failed:", error);
-        sessionStorage.removeItem('varsaka_user');
-        navigate('/login');
-        return;
-      }
-
-      // 🛡️ SECURITY FIX 2: Privilege Escalation Prevention
-      // Check if user spoofed their role in sessionStorage
-      const realRole = user.user_metadata?.role || 'employee';
-      const fullName = user.user_metadata?.full_name || user.email.split('@')[0];
-
-      const verifiedSession = {
-        id: user.id,
-        name: fullName,
-        role: realRole,
-        email: user.email
-      };
-
-      setSession(verifiedSession);
-      // Wait for session state to update before fetching data
-    };
-
-    validateSession();
-  }, [navigate]);
+  // Session validation is now handled strictly by AuthContext.
 
   // Fetch data only after session is validated and set
   useEffect(() => {
@@ -447,8 +531,8 @@ export default function Portal() {
     else fetchInterns();
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('varsaka_user');
+  const handleLogout = async () => {
+    await signOut();
     sessionStorage.removeItem('notified_refresh'); // 🔄 Clear flag on logout
     navigate('/login');
   };
@@ -537,7 +621,7 @@ export default function Portal() {
       triggerInfo('Failed to delete from DB: ' + deleteError.message);
     } else {
       // --- GOOGLE SHEET SYNC (DELETE) ---
-      const gsUrl = import.meta.env.VITE_GS_SYNC_URL || 'https://script.google.com/macros/s/AKfycbyw7GZnCMwqeGRViy3a9TFJzRCDKpEAWoJyjquGyC4c7dQOaHFP6uOnmVgPXNxhim46/exec';
+      const gsUrl = import.meta.env.VITE_GS_SYNC_URL;
       if (gsUrl) {
         fetch(gsUrl, {
           method: 'POST',
@@ -576,7 +660,7 @@ export default function Portal() {
       
       // 🛡️ GATED APPROVAL: Only sync to GS if Admin is adding it directly.
       // Employee leads wait for Admin Approval.
-      const gsUrl = import.meta.env.VITE_GS_SYNC_URL || 'https://script.google.com/macros/s/AKfycbyw7GZnCMwqeGRViy3a9TFJzRCDKpEAWoJyjquGyC4c7dQOaHFP6uOnmVgPXNxhim46/exec';
+      const gsUrl = import.meta.env.VITE_GS_SYNC_URL;
       if (!isStaff && gsUrl) {
         fetch(gsUrl, {
           method: 'POST',
@@ -605,7 +689,7 @@ export default function Portal() {
     }
     const { error } = await supabase.from('leads').update({ status: 'new' }).eq('id', lead.id);
     
-    const gsUrl = import.meta.env.VITE_GS_SYNC_URL || 'https://script.google.com/macros/s/AKfycbyw7GZnCMwqeGRViy3a9TFJzRCDKpEAWoJyjquGyC4c7dQOaHFP6uOnmVgPXNxhim46/exec';
+    const gsUrl = import.meta.env.VITE_GS_SYNC_URL;
     if (!error && gsUrl) {
       // 🚀 SYNC TO GOOGLE SHEETS ONLY ON APPROVAL
       fetch(gsUrl, {
@@ -675,7 +759,7 @@ export default function Portal() {
 
   // 📈 Stats Calculation
   const stats = (() => {
-    const relevant = data.filter(r => session.role === 'admin' || r.assigned_to === session.id);
+    const relevant = data.filter(r => session?.role === 'admin' || r.assigned_to === session?.id);
     return {
       total: relevant.length,
       new: relevant.filter(r => r.status === 'new').length,
@@ -687,58 +771,463 @@ export default function Portal() {
 
   // 🔍 Filtering Logic
   const filteredData = data.filter(r => {
-    if (session.role === 'employee' && r.assigned_to !== session.id) return false;
+    if (session?.role === 'employee' && r.assigned_to !== session?.id) return false;
     if (filter !== 'all' && r.status !== filter) return false;
     const s = search.toLowerCase();
     return r.name.toLowerCase().includes(s) || r.email.toLowerCase().includes(s) || r.msg.toLowerCase().includes(s);
   });
 
-  if (!session) return null;
+  if (!session) return <div style={{height: '100vh', background: 'red', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px'}}>DEBUG: SESSION IS NULL IN PORTAL!</div>;
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === 'Jobs') {
+      setShowTeam(false);
+      fetchInterns();
+    } else if (tab === 'Care Requests') {
+      setShowTeam(false);
+    }
+  };
+
+  const MENU_ITEMS = [
+    { id: 'Dashboard', icon: 'fa-solid fa-chart-pie', label: 'Dashboard' },
+    { id: 'Services', icon: 'fa-solid fa-layer-group', label: 'Services' },
+    { id: 'Blog', icon: 'fa-solid fa-pen-nib', label: 'Blog' },
+    { id: 'Case Studies', icon: 'fa-solid fa-book-open', label: 'Case Studies' },
+    { id: 'Care Requests', icon: 'fa-solid fa-heart-pulse', label: 'Care Requests' },
+    { id: 'Jobs', icon: 'fa-solid fa-user-tie', label: 'Jobs' },
+    { id: 'Testimonials', icon: 'fa-solid fa-comment-dots', label: 'Testimonials' },
+    { id: 'FAQ', icon: 'fa-solid fa-circle-question', label: 'FAQ' },
+    { id: 'Media', icon: 'fa-solid fa-image', label: 'Media' },
+    { id: 'Users', icon: 'fa-solid fa-users', label: 'Users' },
+    { id: 'Settings', icon: 'fa-solid fa-gear', label: 'Settings' }
+  ];
 
   return (
-    <div className="portal-page">
+    <div className="admin-layout">
       <Helmet>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
-      <header className="portal-header">
-        <div className="portal-brand">
-          <div className="brand-logo-stack" onClick={() => navigate('/')} style={{cursor: 'pointer'}}>
-            <img src={logo} className="portal-logo" alt="Varsaka Labs" />
-            <h1>Varsaka Labs</h1>
+      
+      {/* SIDEBAR */}
+      <aside className="admin-sidebar">
+        <div className="sidebar-header">
+          <img src={logo} alt="Varsaka Labs" />
+          <div className="sidebar-brand-text">
+            <h2>Varsaka Labs</h2>
+            <span>Admin Panel</span>
           </div>
         </div>
-        <span className={`role-badge ${session.role} header-center`}>{session.name}</span>
-        <div className="portal-mobile-toggle">
-          <button className="btn-hamburger" onClick={() => setShowMobileMenu(!showMobileMenu)}>
-            {showMobileMenu ? '✕' : '☰'}
-          </button>
-        </div>
+        
+        <div className="sidebar-menu-title">Menu</div>
+        
+        <nav className="sidebar-nav">
+          {MENU_ITEMS.map(item => (
+            <div 
+              key={item.id}
+              className={`sidebar-item ${activeTab === item.id ? 'active' : ''}`}
+              onClick={() => handleTabChange(item.id)}
+            >
+              <i className={item.icon}></i>
+              <span>{item.label}</span>
+            </div>
+          ))}
+        </nav>
 
-        <div className={`portal-actions ${showMobileMenu ? 'mobile-open' : ''}`}>
-          <button className="btn-settings" style={{background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe'}} onClick={() => { setShowAddLead(!showAddLead); setShowMobileMenu(false); }}>
-            {showAddLead ? '✕ Close' : '➕ Add Lead'}
-          </button>
-          {session.role === 'admin' && (
-            <button className="btn-settings" onClick={() => { setShowTeam(!showTeam); setShowInterns(false); setShowMobileMenu(false); }}>
-              {showTeam ? '📋 Show Leads' : '👥 Team Workload'}
-            </button>
-          )}
-          {session.role === 'admin' && (
-            <button className="btn-settings" onClick={() => { setShowInterns(!showInterns); setShowTeam(false); setShowMobileMenu(false); if(!showInterns) fetchInterns(); }} style={{background: '#faf5ff', color: '#7c3aed', border: '1px solid #e9d5ff'}}>
-              {showInterns ? '📋 Show Leads' : '🎓 Manage Interns'}
-            </button>
-          )}
-          {session.role === 'admin' && (
-            <button className="btn-refresh" onClick={() => { exportToCSV(); setShowMobileMenu(false); }} style={{background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0'}}>
-              📥 Export Data
-            </button>
-          )}
-          <button className="btn-refresh" onClick={() => { fetchData(); setShowMobileMenu(false); }} disabled={loading}>↻ {loading ? '...' : 'Refresh'}</button>
-          <button className="btn-logout" onClick={handleLogout}>Logout</button>
+        <div className="sidebar-footer">
+          <div className="sidebar-avatar">{session.name.charAt(0)}</div>
+          <div className="sidebar-user-info">
+            <strong>{session.name}</strong>
+            <span>{session.email}</span>
+          </div>
         </div>
-      </header>
+      </aside>
 
-      <main className="portal-container">
+      {/* MAIN CONTENT */}
+      <div className="admin-main">
+        <header className="admin-topbar">
+          <h1>{activeTab}</h1>
+          <div className="topbar-right">
+            <div className="topbar-user">
+              <div className="topbar-user-text">
+                <strong>{session.name}</strong>
+                <span>{session.email}</span>
+              </div>
+              <div className="topbar-avatar">{session.name.slice(0, 2).toUpperCase()}</div>
+            </div>
+            <button className="btn-logout" onClick={handleLogout} style={{marginLeft: '10px', padding: '0.5rem 1rem'}}>Logout</button>
+          </div>
+        </header>
+
+        <main className="admin-content">
+
+        {activeTab === 'Dashboard' && (
+          <>
+            <div className="dash-stats-grid">
+              <div className="dash-card">
+                <div className="dash-card-title">Total Posts</div>
+                <div className="dash-card-value">3</div>
+                <div className="dash-card-footer"><i className="fa-solid fa-minus"></i> 3 case studies</div>
+              </div>
+              <div className="dash-card">
+                <div className="dash-card-title">Services</div>
+                <div className="dash-card-value">6</div>
+                <div className="dash-card-footer"><i className="fa-solid fa-minus"></i> All active</div>
+              </div>
+              <div className="dash-card">
+                <div className="dash-card-title">Care Requests</div>
+                <div className="dash-card-value">{stats.new}</div>
+                <div className="dash-card-footer"><i className="fa-solid fa-minus"></i> {stats.new} pending</div>
+              </div>
+              <div className="dash-card">
+                <div className="dash-card-title">Testimonials</div>
+                <div className="dash-card-value">3</div>
+                <div className="dash-card-footer"><i className="fa-solid fa-minus"></i> Active</div>
+              </div>
+            </div>
+
+            <div className="dash-bottom-grid">
+              <div className="dash-panel">
+                <h3>Recent Care Requests</h3>
+                {data.length === 0 ? (
+                  <div className="empty-state">No care requests yet.</div>
+                ) : (
+                  <div className="leads-table-wrap">
+                    <table className="leads-table">
+                      <thead>
+                        <tr>
+                          <th>Client Name</th>
+                          <th>Service</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.slice(0, 5).map(r => (
+                          <tr key={r.id}>
+                            <td><strong>{r.name}</strong></td>
+                            <td><span className="service-tag">{r.service}</span></td>
+                            <td><span className={`role-badge ${r.status === 'new' ? 'admin' : 'employee'}`}>{r.status}</span></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+              <div className="dash-panel">
+                <h3>Quick Actions</h3>
+                <div className="quick-actions-list">
+                  <div className="quick-action-btn">
+                    <span>New Blog Post</span>
+                    <i className="fa-solid fa-arrow-right"></i>
+                  </div>
+                  <div className="quick-action-btn">
+                    <span>Manage Services</span>
+                    <i className="fa-solid fa-arrow-right"></i>
+                  </div>
+                  <div className="quick-action-btn" onClick={() => handleTabChange('Care Requests')}>
+                    <span>Care Requests</span>
+                    <i className="fa-solid fa-arrow-right"></i>
+                  </div>
+                  <div className="quick-action-btn">
+                    <span>Testimonials</span>
+                    <i className="fa-solid fa-arrow-right"></i>
+                  </div>
+                </div>
+
+                <div className="system-status">
+                  <div className="status-dot"></div>
+                  <span>System Status</span>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {activeTab === 'Services' && (
+          <div className="portal-container" style={{padding: '2rem'}}>
+            <div className="dash-panel">
+              <div className="panel-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <h2>Services Management</h2>
+                <button className="btn-settings" style={{background: 'var(--brand-blue)', color: 'white'}} onClick={() => handleOpenGenericModal('Service')}>➕ Add Service</button>
+              </div>
+              <table className="portal-table">
+                <thead>
+                  <tr>
+                    <th>Service Name</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mockServices.map(srv => (
+                    <tr key={srv.id}>
+                      <td><strong>{srv.name}</strong></td>
+                      <td><span className="pill badge-blue">{srv.category}</span></td>
+                      <td>
+                        <span className={`status-badge ${srv.status === 'active' ? 'status-new' : 'status-in-progress'}`}>{srv.status}</span>
+                      </td>
+                      <td>
+                        <button className="btn-action" onClick={() => handleOpenGenericModal('Service', srv)}>Edit</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'Blog' && (
+          <div className="portal-container" style={{padding: '2rem'}}>
+            <div className="dash-panel">
+              <div className="panel-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <h2>Blog Content</h2>
+                <button className="btn-settings" style={{background: 'var(--brand-blue)', color: 'white'}} onClick={() => handleOpenGenericModal('Blog')}>✍️ New Post</button>
+              </div>
+              <div className="filter-row" style={{marginBottom: '1rem'}}>
+                <button className="filter-btn active">All Posts</button>
+                <button className="filter-btn">Published</button>
+                <button className="filter-btn">Drafts</button>
+              </div>
+              <table className="portal-table">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Views</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mockBlogs.map(post => (
+                    <tr key={post.id}>
+                      <td><strong>{post.title}</strong></td>
+                      <td><span className={`status-badge ${post.status === 'published' ? 'status-won' : 'status-lost'}`}>{post.status}</span></td>
+                      <td>{post.views}</td>
+                      <td>{post.date}</td>
+                      <td>
+                        <button className="btn-action" onClick={() => handleOpenGenericModal('Blog', post)}>Edit</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'Case Studies' && (
+          <div className="portal-container" style={{padding: '2rem'}}>
+            <div className="dash-panel">
+              <div className="panel-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <h2>Case Studies</h2>
+                <button className="btn-settings" style={{background: 'var(--brand-blue)', color: 'white'}}>➕ Add Study</button>
+              </div>
+              <div className="empty-state" style={{marginTop: '2rem'}}>
+                <h3>No Case Studies Published</h3>
+                <p>Add your first case study to showcase your work.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'Testimonials' && (
+          <div className="portal-container" style={{padding: '2rem'}}>
+            <div className="dash-panel">
+              <div className="panel-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <h2>Client Testimonials</h2>
+                <button className="btn-settings" style={{background: 'var(--brand-blue)', color: 'white'}} onClick={() => handleOpenGenericModal('Testimonial')}>➕ Add Testimonial</button>
+              </div>
+              <div className="interns-grid" style={{marginTop: '1.5rem'}}>
+                {mockTestimonials.map(t => (
+                  <div key={t.id} className="intern-card" style={{cursor: 'pointer'}} onClick={() => handleOpenGenericModal('Testimonial', t)}>
+                    <div className="intern-card-header">
+                      <h3>{t.client}</h3>
+                      <span className={`status-badge ${t.status === 'approved' ? 'status-won' : 'status-in-progress'}`}>{t.status}</span>
+                    </div>
+                    <div className="intern-card-body">
+                      <p style={{fontSize: '14px', color: '#666', marginBottom: '10px'}}>{t.company}</p>
+                      <p>"{t.text}"</p>
+                      <p style={{color: 'gold', marginTop: '10px'}}>{"★".repeat(t.rating)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'FAQ' && (
+          <div className="portal-container" style={{padding: '2rem'}}>
+            <div className="dash-panel">
+              <div className="panel-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <h2>FAQ Manager</h2>
+                <button className="btn-settings" style={{background: 'var(--brand-blue)', color: 'white'}} onClick={() => handleOpenGenericModal('FAQ')}>➕ Add Question</button>
+              </div>
+              <div className="interns-grid" style={{marginTop: '1.5rem'}}>
+                {mockFaqs.map(f => (
+                  <div key={f.id} className="intern-card" style={{borderLeft: '4px solid var(--brand-blue)', cursor: 'pointer'}} onClick={() => handleOpenGenericModal('FAQ', f)}>
+                    <div className="intern-card-header">
+                      <h3>{f.question}</h3>
+                      <span className="pill badge-purple">{f.category}</span>
+                    </div>
+                    <div className="intern-card-body">
+                      <p>{f.answer}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'Media' && (
+          <div className="portal-container" style={{padding: '2rem'}}>
+            <div className="dash-panel">
+              <div className="panel-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <h2>Media Library</h2>
+                <button className="btn-settings" style={{background: 'var(--brand-blue)', color: 'white'}}>☁️ Upload</button>
+              </div>
+              <div className="empty-state" style={{marginTop: '2rem', border: '2px dashed #ddd', background: '#f9fafb'}}>
+                <h3>Drag & Drop Files Here</h3>
+                <p>Support for PNG, JPG, PDF, SVG</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'Users' && (
+          <div className="portal-container" style={{padding: '2rem'}}>
+            <div className="dash-panel">
+              <div className="panel-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <h2>Role Management</h2>
+                <button className="btn-settings" style={{background: 'var(--brand-blue)', color: 'white'}} onClick={() => handleOpenGenericModal('User')}>➕ Invite User</button>
+              </div>
+              <table className="portal-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Last Login</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mockUsers.map(user => (
+                    <tr key={user.id}>
+                      <td><strong>{user.name}</strong></td>
+                      <td>{user.email}</td>
+                      <td><span className={`pill ${user.role === 'admin' ? 'badge-blue' : 'badge-purple'}`}>{user.role}</span></td>
+                      <td>{user.lastLogin}</td>
+                      <td><span className={`status-badge ${user.status === 'active' ? 'status-won' : 'status-lost'}`}>{user.status}</span></td>
+                      <td>
+                        <button className="btn-action" onClick={() => handleOpenGenericModal('User', user)}>Manage</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'Settings' && (
+          <div className="portal-container" style={{padding: '2rem'}}>
+            <div className="dash-panel">
+              <div className="panel-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <h2>Platform Settings</h2>
+              </div>
+              <div className="settings-container" style={{display: 'flex', gap: '2rem', marginTop: '1.5rem', flexWrap: 'wrap'}}>
+                <div className="settings-nav" style={{flex: '0 0 200px', display: 'flex', flexDirection: 'column', gap: '0.5rem'}}>
+                  <button className={`filter-btn ${settingsTab === 'profile' ? 'active' : ''}`} onClick={() => setSettingsTab('profile')} style={{textAlign: 'left', width: '100%'}}>Profile</button>
+                  <button className={`filter-btn ${settingsTab === 'security' ? 'active' : ''}`} onClick={() => setSettingsTab('security')} style={{textAlign: 'left', width: '100%'}}>Security & 2FA</button>
+                  <button className={`filter-btn ${settingsTab === 'api' ? 'active' : ''}`} onClick={() => setSettingsTab('api')} style={{textAlign: 'left', width: '100%'}}>API Keys</button>
+                  <button className={`filter-btn ${settingsTab === 'notifications' ? 'active' : ''}`} onClick={() => setSettingsTab('notifications')} style={{textAlign: 'left', width: '100%'}}>Notifications</button>
+                </div>
+                <div className="settings-content" style={{flex: 1, minWidth: '300px', padding: '2rem', background: '#f9fafb', borderRadius: '12px', border: '1px solid #eee'}}>
+                  {settingsTab === 'profile' && (
+                    <div>
+                      <h3>Profile Settings</h3>
+                      <p style={{color: '#666', marginBottom: '1.5rem'}}>Update your personal information.</p>
+                      <div className="form-group" style={{marginBottom: '1rem'}}>
+                        <label style={{fontWeight: 600, fontSize: '0.9rem', color: '#4b5563'}}>Full Name</label>
+                        <input type="text" className="portal-input" value={session.name} readOnly style={{marginTop: '0.5rem'}} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{fontWeight: 600, fontSize: '0.9rem', color: '#4b5563'}}>Email Address</label>
+                        <input type="email" className="portal-input" value={session.email} readOnly style={{marginTop: '0.5rem'}} />
+                      </div>
+                    </div>
+                  )}
+                  {settingsTab === 'security' && (
+                    <div>
+                      <h3>Security & 2FA</h3>
+                      <p style={{color: '#666', marginBottom: '1.5rem'}}>Protect your account with additional security.</p>
+                      <div className="empty-state" style={{padding: '1.5rem', background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                        <p>Two-factor authentication is not configured.</p>
+                        <button className="btn-settings" style={{marginTop: '1rem', background: 'var(--brand-blue)', color: 'white'}}>Enable 2FA</button>
+                      </div>
+                    </div>
+                  )}
+                  {settingsTab === 'api' && (
+                    <div>
+                      <h3>API Keys</h3>
+                      <p style={{color: '#666', marginBottom: '1.5rem'}}>Manage API tokens for external integrations.</p>
+                      <div className="empty-state" style={{padding: '1.5rem', background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                        <p>No API keys generated.</p>
+                        <button className="btn-settings" style={{marginTop: '1rem', background: '#10b981', color: 'white', border: 'none'}}>Generate Key</button>
+                      </div>
+                    </div>
+                  )}
+                  {settingsTab === 'notifications' && (
+                    <div>
+                      <h3>Notification Preferences</h3>
+                      <p style={{color: '#666', marginBottom: '1.5rem'}}>Choose what you want to be notified about.</p>
+                      <div style={{background: 'white', padding: '1.5rem', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                        <label style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem', cursor: 'pointer'}}>
+                          <input type="checkbox" defaultChecked /> Email alerts for new Leads
+                        </label>
+                        <label style={{display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer'}}>
+                          <input type="checkbox" defaultChecked /> Email alerts for new Job Applications
+                        </label>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {(activeTab === 'Care Requests' || activeTab === 'Jobs') && (
+          <div className="portal-container" style={{padding: 0}}>
+            
+            {/* Context Actions */}
+            <div className="filter-row" style={{justifyContent: 'flex-end', marginBottom: '1rem'}}>
+              {activeTab === 'Care Requests' && (
+                <button className="btn-settings" onClick={() => setShowAddLead(!showAddLead)}>
+                  {showAddLead ? '✕ Close Form' : '➕ Add Lead'}
+                </button>
+              )}
+              {session.role === 'admin' && activeTab === 'Care Requests' && (
+                <button className="btn-settings" onClick={() => setShowTeam(!showTeam)}>
+                  {showTeam ? '📋 Show Leads' : '👥 Team Workload'}
+                </button>
+              )}
+              {session.role === 'admin' && activeTab === 'Jobs' && (
+                <button className="btn-settings" style={{background: '#faf5ff', color: '#7c3aed', border: '1px solid #e9d5ff'}} onClick={() => setShowAddIntern(!showAddIntern)}>
+                  ➕ Add Intern
+                </button>
+              )}
+              <button className="btn-refresh" onClick={() => exportToCSV()} style={{background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0'}}>📥 Export Data</button>
+              <button className="btn-refresh" onClick={() => fetchData()} disabled={loading}>↻ {loading ? '...' : 'Refresh'}</button>
+            </div>
+
         {showAddLead && (
           <div className="portal-settings-panel fade-in visible" style={{borderColor: '#2563eb'}}>
             <h3>➕ Add New Lead</h3>
@@ -1031,7 +1520,7 @@ export default function Portal() {
           </div>
         )}
 
-        {!showInterns && !showTeam && (
+        {activeTab === 'Care Requests' && (
           <>
             <div className="mobile-stats-toggle">
               <button className="btn-stats-toggle" onClick={() => setShowMobileStats(!showMobileStats)}>
@@ -1212,9 +1701,170 @@ export default function Portal() {
           </table>
           {filteredData.length === 0 && !loading && <div className="no-data">No results found.</div>}
         </div>
-      </>
-    )}
-  </main>
+          </>
+        )}
+
+        </div>
+        )}
+        </main>
+      </div>
+
+      {/* --- Generic CRUD Modal --- */}
+      {genericModal.isOpen && (
+        <div className="modern-modal-overlay">
+          <div className="modern-modal-content">
+            <div className="modern-modal-header">
+              <h3>
+                {genericModal.type === 'Service' && '🛠️ '}
+                {genericModal.type === 'Blog' && '✍️ '}
+                {genericModal.type === 'Testimonial' && '💬 '}
+                {genericModal.type === 'FAQ' && '❓ '}
+                {genericModal.type === 'User' && '👤 '}
+                {genericModal.data ? 'Edit' : 'Add'} {genericModal.type}
+              </h3>
+              <button type="button" className="modern-modal-close" onClick={handleCloseGenericModal}>✕</button>
+            </div>
+
+            <form onSubmit={handleGenericSave} className="modern-form-grid">
+              
+              {genericModal.type === 'Service' && (
+                <>
+                  <div className="modern-form-group">
+                    <label>Service Name</label>
+                    <input type="text" name="name" className="modern-input" defaultValue={genericModal.data?.name || ''} required placeholder="e.g., Automation Testing" />
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Category</label>
+                    <input type="text" name="category" className="modern-input" defaultValue={genericModal.data?.category || ''} required placeholder="e.g., Testing" />
+                  </div>
+                  <div className="modern-form-group full-width">
+                    <label>Description</label>
+                    <textarea name="description" className="modern-input modern-textarea" defaultValue={genericModal.data?.description || ''} placeholder="Write a short description about this service..."></textarea>
+                  </div>
+                  <div className="modern-form-group full-width">
+                    <label>Status</label>
+                    <select name="status" className="modern-input" defaultValue={genericModal.data?.status || 'active'}>
+                      <option value="active">Active</option>
+                      <option value="beta">Beta</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+                </>
+              )}
+
+              {genericModal.type === 'Blog' && (
+                <>
+                  <div className="modern-form-group full-width">
+                    <label>Title</label>
+                    <input type="text" name="title" className="modern-input" defaultValue={genericModal.data?.title || ''} required placeholder="Enter an engaging blog title" />
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Status</label>
+                    <select name="status" className="modern-input" defaultValue={genericModal.data?.status || 'draft'}>
+                      <option value="published">Published</option>
+                      <option value="draft">Draft</option>
+                    </select>
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Publish Date</label>
+                    <input type="date" name="date" className="modern-input" defaultValue={genericModal.data?.date || new Date().toISOString().split('T')[0]} required />
+                  </div>
+                  <div className="modern-form-group full-width">
+                    <label>Content Summary</label>
+                    <textarea name="summary" className="modern-input modern-textarea" defaultValue={genericModal.data?.summary || ''} placeholder="Write a brief excerpt or summary for the blog..."></textarea>
+                  </div>
+                  <input type="hidden" name="views" value={genericModal.data?.views || 0} />
+                </>
+              )}
+
+              {genericModal.type === 'Testimonial' && (
+                <>
+                  <div className="modern-form-group">
+                    <label>Client Name</label>
+                    <input type="text" name="client" className="modern-input" defaultValue={genericModal.data?.client || ''} required placeholder="e.g., Jane Doe" />
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Company</label>
+                    <input type="text" name="company" className="modern-input" defaultValue={genericModal.data?.company || ''} required placeholder="e.g., TechCorp" />
+                  </div>
+                  <div className="modern-form-group full-width">
+                    <label>Testimonial Text</label>
+                    <textarea name="text" className="modern-input modern-textarea" defaultValue={genericModal.data?.text || ''} required placeholder="What did they say about Varsaka?"></textarea>
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Rating (1-5)</label>
+                    <input type="number" name="rating" className="modern-input" min="1" max="5" defaultValue={genericModal.data?.rating || 5} required />
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Status</label>
+                    <select name="status" className="modern-input" defaultValue={genericModal.data?.status || 'pending'}>
+                      <option value="approved">Approved</option>
+                      <option value="pending">Pending</option>
+                    </select>
+                  </div>
+                </>
+              )}
+
+              {genericModal.type === 'FAQ' && (
+                <>
+                  <div className="modern-form-group full-width">
+                    <label>Question</label>
+                    <input type="text" name="question" className="modern-input" defaultValue={genericModal.data?.question || ''} required placeholder="What is the frequent question?" />
+                  </div>
+                  <div className="modern-form-group full-width">
+                    <label>Answer</label>
+                    <textarea name="answer" className="modern-input modern-textarea" defaultValue={genericModal.data?.answer || ''} required placeholder="Provide a helpful answer..."></textarea>
+                  </div>
+                  <div className="modern-form-group full-width">
+                    <label>Category</label>
+                    <input type="text" name="category" className="modern-input" defaultValue={genericModal.data?.category || 'General'} required />
+                  </div>
+                </>
+              )}
+
+              {genericModal.type === 'User' && (
+                <>
+                  <div className="modern-form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="name" className="modern-input" defaultValue={genericModal.data?.name || ''} required placeholder="e.g., John Smith" />
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" className="modern-input" defaultValue={genericModal.data?.email || ''} required placeholder="john@example.com" />
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Role</label>
+                    <select name="role" className="modern-input" defaultValue={genericModal.data?.role || 'employee'}>
+                      <option value="admin">Admin</option>
+                      <option value="employee">Employee</option>
+                    </select>
+                  </div>
+                  <div className="modern-form-group">
+                    <label>Status</label>
+                    <select name="status" className="modern-input" defaultValue={genericModal.data?.status || 'active'}>
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+                  <input type="hidden" name="lastLogin" value={genericModal.data?.lastLogin || 'Never'} />
+                </>
+              )}
+
+              <div className="modern-modal-actions">
+                {genericModal.data && (
+                  <button type="button" className="modern-btn-delete" onClick={() => {
+                    if(window.confirm(`Are you sure you want to delete this ${genericModal.type}?`)) handleGenericDelete();
+                  }}>🗑️ Delete</button>
+                )}
+                <button type="button" className="modern-btn-cancel" onClick={handleCloseGenericModal}>Cancel</button>
+                <button type="submit" className="modern-btn-submit">
+                  {genericModal.data ? '💾 Save Changes' : '✨ Create'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {showRejectModal && (
         <div className="custom-modal-overlay">

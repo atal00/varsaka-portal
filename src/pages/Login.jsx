@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../supabaseClient';
+import { useAuth } from '../contexts/AuthContext';
+import SecureCaptcha from '../components/SecureCaptcha';
 import './Login.css';
 
 export default function Login() {
@@ -10,70 +12,67 @@ export default function Login() {
   const [pass, setPass] = useState('');
   const [error, setError] = useState('');
   const [showPass, setShowPass] = useState(false);
-  const [attempts, setAttempts] = useState(0);
-  const [isLocked, setIsLocked] = useState(false);
-  const [captchaEmojiTarget, setCaptchaEmojiTarget] = useState(null);
-  const [captchaEmojiSelected, setCaptchaEmojiSelected] = useState(null);
-  const [captchaEmojiGrid, setCaptchaEmojiGrid] = useState([]);
+  const [isCaptchaValid, setIsCaptchaValid] = useState(false);
+  const [captchaKey, setCaptchaKey] = useState(0);
+  const [clientIp, setClientIp] = useState('Unknown');
   const navigate = useNavigate();
-
-  const EMOJI_DB = [
-    { icon: '🚗', name: 'Car' },
-    { icon: '🍎', name: 'Apple' },
-    { icon: '🐱', name: 'Cat' },
-    { icon: '🔒', name: 'Lock' },
-    { icon: '✈️', name: 'Airplane' },
-    { icon: '⚽', name: 'Soccer Ball' },
-    { icon: '🎸', name: 'Guitar' },
-    { icon: '🚀', name: 'Rocket' }
-  ];
-
-  const generateCaptcha = () => {
-    const shuffled = [...EMOJI_DB].sort(() => 0.5 - Math.random());
-    const selectedGrid = shuffled.slice(0, 4);
-    setCaptchaEmojiGrid(selectedGrid);
-    setCaptchaEmojiTarget(selectedGrid[Math.floor(Math.random() * 4)]);
-    setCaptchaEmojiSelected(null);
-  };
+  const { session } = useAuth();
 
   useEffect(() => {
-    setTimeout(() => {
-      generateCaptcha();
-      setError(''); // Clear any errors when switching tabs
-    }, 0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setCaptchaKey(prev => prev + 1);
+    setIsCaptchaValid(false);
+    setError(''); // Clear any errors when switching tabs
   }, [role]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (sessionStorage.getItem('varsaka_user')) navigate('/portal');
-  }, [navigate]);
+    if (session) navigate('/portal');
+  }, [session, navigate]);
 
   useEffect(() => {
-    if (attempts >= 3) {
-      setTimeout(() => {
-        setIsLocked(true);
-        setError('Too many failed attempts. Locked for 30 seconds.');
-      }, 0);
-      const timer = setTimeout(() => {
-        setIsLocked(false);
-        setAttempts(0);
-        setError('');
-      }, 30000);
-      return () => clearTimeout(timer);
+    // Check if IP is blocked and get user's IP
+    fetch('https://api.ipify.org?format=json')
+      .then(res => res.json())
+      .then(data => {
+        setClientIp(data.ip);
+        const blocked = JSON.parse(localStorage.getItem('admin_blocked_ips') || '[]');
+        const record = blocked.find(b => b.ip === data.ip);
+        if (record) {
+          const hoursPassed = (Date.now() - record.time) / (1000 * 60 * 60);
+          if (hoursPassed < 24) {
+            navigate('/404', { replace: true });
+          } else {
+            // Unblock after 24 hours
+            localStorage.setItem('admin_blocked_ips', JSON.stringify(blocked.filter(b => b.ip !== data.ip)));
+          }
+        }
+      })
+      .catch(() => {});
+  }, [navigate]);
+
+  const handleFailedAttempt = () => {
+    let currentAttempts = parseInt(localStorage.getItem('varsaka_failed_attempts') || '0') + 1;
+    
+    if (currentAttempts >= 3) {
+      // 3 fails -> Block IP for 24 hours and send to "Admin Secure Section" via localStorage
+      const blocked = JSON.parse(localStorage.getItem('admin_blocked_ips') || '[]');
+      blocked.push({ ip: clientIp, time: Date.now() });
+      localStorage.setItem('admin_blocked_ips', JSON.stringify(blocked));
+      localStorage.setItem('varsaka_failed_attempts', '0'); // reset for future
+    } else {
+      localStorage.setItem('varsaka_failed_attempts', currentAttempts.toString());
     }
-  }, [attempts]);
+    
+    // Immediately bounce them to 404 page
+    navigate('/404', { replace: true });
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (isLocked) return;
     setError('');
 
-    // 🛡️ SECURITY FIX 4: Image CAPTCHA Verification
-    if (!captchaEmojiTarget || captchaEmojiSelected !== captchaEmojiTarget.name) {
-      setError('Incorrect image selected. Please try again.');
-      generateCaptcha();
-      setAttempts(prev => prev + 1);
+    if (!isCaptchaValid) {
+      handleFailedAttempt();
       return;
     }
 
@@ -88,11 +87,12 @@ export default function Login() {
     });
 
     if (authError) {
-      setError(authError.message);
-      setAttempts(prev => prev + 1);
-      generateCaptcha();
+      handleFailedAttempt();
       return;
     }
+
+    // Reset failed attempts on successful login
+    localStorage.setItem('varsaka_failed_attempts', '0');
 
     const { user: sbUser } = data;
     
@@ -113,12 +113,6 @@ export default function Login() {
       setError('Admins must log in through the Admin tab.');
       return;
     }
-
-    sessionStorage.setItem('varsaka_user', JSON.stringify({ 
-      name: fullName, 
-      role: userRole, 
-      id: sbUser.id 
-    }));
 
     // Log activity (Optional: Move this to Supabase later)
     const logs = JSON.parse(localStorage.getItem('varsaka_activity') || '[]');
@@ -191,33 +185,12 @@ export default function Login() {
             </div>
           </div>
           <div className="login-group">
-            <label>Security Check: Select the {captchaEmojiTarget?.name}</label>
-            <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
-              {captchaEmojiGrid.map(item => (
-                <div 
-                  key={item.name} 
-                  onClick={() => setCaptchaEmojiSelected(item.name)}
-                  style={{ 
-                    fontSize: '1.8rem', 
-                    flex: 1,
-                    textAlign: 'center',
-                    padding: '8px', 
-                    border: captchaEmojiSelected === item.name ? '2px solid #2563eb' : '2px solid #e2e8f0',
-                    borderRadius: '12px',
-                    cursor: 'pointer',
-                    background: captchaEmojiSelected === item.name ? '#eff6ff' : '#f8fafc',
-                    transition: 'all 0.2s',
-                    userSelect: 'none'
-                  }}
-                >
-                  {item.icon}
-                </div>
-              ))}
-            </div>
+            <label>Security Check</label>
+            <SecureCaptcha key={captchaKey} onValidate={setIsCaptchaValid} />
           </div>
           
-          <button type="submit" className="login-btn" disabled={isLocked}>
-            {isLocked ? 'Access Locked' : <>{'Secure Login'} <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></>}
+          <button type="submit" className="login-btn">
+            <>{'Secure Login'} <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></>
           </button>
         </form>
 

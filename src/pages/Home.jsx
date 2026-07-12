@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient';
 import './Home.css';
 import { sanitize, validateEmail } from '../utils/security';
 import SEO from '../components/SEO';
+import SecureCaptcha from '../components/SecureCaptcha';
 
 const ALL_COUNTRIES = [
   { name: 'Afghanistan', code: '+93', flag: '🇦🇫' }, { name: 'Albania', code: '+355', flag: '🇦🇱' }, { name: 'Algeria', code: '+213', flag: '🇩🇿' },
@@ -63,8 +64,8 @@ const ALL_COUNTRIES = [
   { name: 'Zambia', code: '+260', flag: '🇿🇲' }, { name: 'Zimbabwe', code: '+263', flag: '🇿🇼' }
 ];
 
-const FS_TARGET = import.meta.env.VITE_FORMSUBMIT_URL || 'https://formsubmit.co/ajax/abhishek@ai.varsaka.com';
-const GS_TARGET = import.meta.env.VITE_GS_SYNC_URL || 'https://script.google.com/macros/s/AKfycbyw7GZnCMwqeGRViy3a9TFJzRCDKpEAWoJyjquGyC4c7dQOaHFP6uOnmVgPXNxhim46/exec';
+const BACKEND_API = '/.netlify/functions/submitLead';
+const GS_TARGET = import.meta.env.VITE_GS_SYNC_URL;
 
 function useFadeIn() {
   useEffect(() => {
@@ -85,6 +86,55 @@ const TOOLS = ['🔵 Selenium','⚫ Playwright','🟢 Cypress','🔴 JMeter','�
 
 export default function Home() {
   useFadeIn();
+  const [testimonials, setTestimonials] = useState([]);
+  const [faqs, setFaqs] = useState([]);
+  const [services, setServices] = useState([]);
+  const [testimonialsLoading, setTestimonialsLoading] = useState(true);
+  const [faqsLoading, setFaqsLoading] = useState(true);
+  const [servicesLoading, setServicesLoading] = useState(true);
+
+  // Fetch Dynamic Content
+  useEffect(() => {
+    const fetchDynamicContent = async () => {
+      // Services
+      const { data: sData } = await supabase.from('services').select('*').in('status', ['active', 'beta']).order('created_at', { ascending: true });
+      if (sData) {
+        setServices(sData.map((s, idx) => ({
+          icon: ['🧪', '🤖', '⚡', '🔐', '🧠', '📱'][idx % 6],
+          title: s.name,
+          desc: s.description || `Professional ${s.category} solutions delivered by Varsaka Labs experts.`,
+          pill: s.category,
+          link: '/contact' // New services might not have a dedicated page yet
+        })));
+      }
+      setServicesLoading(false);
+      // Testimonials
+      const { data: tData } = await supabase.from('testimonials').select('*').eq('status', 'approved').order('created_at', { ascending: false });
+      if (tData) {
+        setTestimonials(tData.map((t, idx) => ({
+          stars: '⭐'.repeat(t.rating) + '☆'.repeat(5 - t.rating),
+          text: `"${t.text}"`,
+          name: t.client,
+          role: t.company,
+          bg: ['#2563eb', '#1d4ed8', '#3b82f6'][idx % 3],
+          init: t.client.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()
+        })));
+      }
+      setTestimonialsLoading(false);
+
+      // FAQs
+      const { data: fData } = await supabase.from('faqs').select('*').order('created_at', { ascending: true });
+      if (fData) {
+        setFaqs(fData.map(f => ({
+          q: f.question,
+          a: f.answer,
+          category: f.category
+        })));
+      }
+      setFaqsLoading(false);
+    };
+    fetchDynamicContent();
+  }, []);
 
   // 🛡️ Smooth Scroll Guardian (Fixes cross-page #hash links)
   useEffect(() => {
@@ -109,40 +159,10 @@ export default function Home() {
   const [showCountryList, setShowCountryList] = useState(false);
 
   // CAPTCHA System
-  const [captcha, setCaptcha] = useState({ a: 0, b: 0, op: '+' });
-  const [userCaptcha, setUserCaptcha] = useState('');
-  const [captchaError, setCaptchaError] = useState(false);
-
-  const generateCaptcha = () => {
-    const ops = ['+', '-'];
-    const op = ops[Math.floor(Math.random() * ops.length)];
-    let a = Math.floor(Math.random() * 90) + 10;
-    let b = Math.floor(Math.random() * 90) + 10;
-    
-    // Ensure subtraction doesn't result in negative numbers for better UX
-    if (op === '-' && b > a) {
-      [a, b] = [b, a]; 
-    }
-
-    setCaptcha({ a, b, op });
-    setUserCaptcha('');
-    setCaptchaError(false);
-  };
-
-  useEffect(() => {
-    setTimeout(() => {
-      generateCaptcha();
-    }, 0);
-  }, []);
+  const [isCaptchaValid, setIsCaptchaValid] = useState(false);
+  const [captchaKey, setCaptchaKey] = useState(0);
 
   const [faqOpen, setFaqOpen] = useState(null);
-  const faqs = [
-    { q: 'How quickly can you start, and what does onboarding look like?', a: 'We can usually kick off within 3-5 business days of signing the agreement. Onboarding involves a 1-hour discovery call to understand your product, tech stack, and testing goals. From there we create a test plan, share it with your team for review, and start execution. No lengthy setup - we keep it lean.' },
-    { q: 'What if we are already mid-project? Can you join without disrupting our workflow?', a: 'Yes, this is actually our most common scenario. We review your existing test artifacts, CI/CD setup, and sprint cadence first. We then integrate at whatever point makes sense - sometimes that\'s just picking up a regression backlog, other times it\'s building automation alongside active development. We adapt to your rhythm.' },
-    { q: 'How do you handle NDAs and data confidentiality?', a: 'We sign an NDA before any project discussion begins - no exceptions. All test environments are isolated, credentials are never stored beyond the project, and our team operates under strict data handling policies. For regulated industries (fintech, healthcare), we align with your compliance requirements as part of scoping.' },
-    { q: 'What does pricing look like? Do you charge per hour or per project?', a: 'Both options are available. For well-defined scope (e.g., a release regression or VAPT), we offer fixed-price engagements. For ongoing QA support or automation builds, we work on a monthly retainer or T&M basis. We share a detailed estimate after the discovery call - no vague ballpark numbers.' },
-    { q: 'Do you integrate with Jira, GitHub, Slack and our existing tools?', a: 'Yes. We work inside your existing toolchain - Jira for bug reporting, GitHub/GitLab for CI triggers, Slack for daily standups and blockers, and TestRail or your preferred TMS for test management. We don\'t ask you to switch tools or adopt new platforms unless there\'s a clear benefit.' },
-  ];
 
   const handleChange = e => setFormState(s => ({ ...s, [e.target.name]: e.target.value }));
 
@@ -162,15 +182,13 @@ export default function Home() {
     // 🛡️ BOT CHECK 1: Honeypot
     if (e.target._honey.value) return; 
 
-    // 🛡️ BOT CHECK 2: Hardened Math CAPTCHA
-    const expected = captcha.op === '+' ? (captcha.a + captcha.b) : (captcha.a - captcha.b);
-    if (parseInt(userCaptcha) !== expected) {
-      setBtnTxt('❌ Incorrect Math!');
-      generateCaptcha();
-      setCaptchaError(true);
+    // 🛡️ BOT CHECK 2: Secure Canvas CAPTCHA
+    if (!isCaptchaValid) {
+      setBtnTxt('❌ Incorrect CAPTCHA!');
+      setCaptchaKey(prev => prev + 1);
+      setIsCaptchaValid(false);
       setTimeout(() => {
         setBtnTxt(<>{'Send Message'} <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px' }}></i></>);
-        setCaptchaError(false);
       }, 2000);
       return;
     }
@@ -195,9 +213,9 @@ export default function Home() {
       }
 
       // 1. Send Email Notification (Check if URL exists)
-      if (FS_TARGET) {
+      if (BACKEND_API) {
         try {
-          await fetch(FS_TARGET, {
+          await fetch(BACKEND_API, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify(cleanData)
@@ -239,7 +257,8 @@ export default function Home() {
         setBtnColor(''); 
         setSubmitting(false); 
         setFormState({ name:'', email:'', phone:'', countryCode: '+91', service:'Functional Testing', message:'' }); 
-        generateCaptcha(); 
+        setCaptchaKey(prev => prev + 1); 
+        setIsCaptchaValid(false);
       }, 3500);
     } catch (err) {
       // 🛡️ Critical Error Logging
@@ -321,14 +340,11 @@ export default function Home() {
           <p className="section-sub">From manual checks to AI-driven automation - we cover every layer of your application with care and precision.</p>
         </div>
         <div className="services-grid">
-          {[
-            {icon:'🧪',title:'Functional Testing',desc:'We verify every feature works exactly as your users expect - across browsers, devices, and all those sneaky edge cases.',pill:'Manual & Scripted', link:'/services/functional-testing'},
-            {icon:'🤖',title:'Automation Testing',desc:'Build it once, run it forever. We design solid automation frameworks with Selenium, Playwright and Cypress - cutting your regression time by up to 80%.',pill:'Selenium · Cypress · Playwright', link:'/services/automation-testing'},
-            {icon:'⚡',title:'Performance Testing',desc:'We simulate thousands of users hitting your app at once - finding bottlenecks before they find your customers.',pill:'JMeter · k6 · Gatling', link:'/services/performance-testing'},
-            {icon:'🔐',title:'Security Testing',desc:'Your users trust you with their data. We run penetration tests, OWASP audits and vulnerability assessments so that trust is never broken.',pill:'OWASP · VAPT · Pen Testing', link:'/services/security-testing'},
-            {icon:'🧠',title:'AI-Powered Testing',desc:'We use machine learning to auto-generate smart test cases, detect anomalies early, and keep test scripts self-healing.',pill:'ML · Smart Automation · AI QA', link:'/services/ai-powered-testing'},
-            {icon:'📱',title:'Mobile Testing',desc:'Native, hybrid or cross-platform - we test on 100+ real devices. iOS and Android, every screen size, pixel-perfect quality guaranteed.',pill:'iOS · Android · Cross-Platform', link:'/services/mobile-testing'},
-          ].map(s => (
+          {servicesLoading ? (
+            <div style={{gridColumn: '1 / -1', textAlign: 'center', padding: '2rem'}}>Loading services...</div>
+          ) : services.length === 0 ? (
+            <div style={{gridColumn: '1 / -1', textAlign: 'center', padding: '2rem'}}>More services coming soon!</div>
+          ) : services.map(s => (
             <Link key={s.title} to={s.link} className="svc-card fade-in" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
               <div className="svc-icon">{s.icon}</div>
               <h3>{s.title}</h3>
@@ -406,13 +422,13 @@ export default function Home() {
           <p className="section-sub">Don't just take our word for it - here's what our happy clients have to say.</p>
         </div>
         <div className="testi-grid">
-          {[
-            {stars:'★★★★★',text:'"We were two weeks from launch and still had flaky test coverage. Varsaka stepped in, mapped out the gaps, and ran a full regression cycle in under 4 days. They caught 3 critical payment flow bugs we had no idea about. Honestly saved our release."',name:'Rohan Verma',role:'Engineering Manager, FinVault India',bg:'#2563eb',init:'RV'},
-            {stars:'★★★★★',text:'"I was sceptical about outsourcing QA, but Varsaka changed my mind quickly. They set up a Playwright automation suite in 2 weeks, integrated it into our GitHub pipeline, and our regression time dropped from 6 hours to under 45 minutes. The communication was clear throughout - no fluff."',name:'Sneha Iyer',role:'Head of Product, Shopmatic',bg:'#1d4ed8',init:'SI'},
-            {stars:'★★★★★',text:'"We needed VAPT done before our ISO audit. The Varsaka team delivered a detailed penetration test report with CVSS scores and clear remediation steps. Auditors were satisfied on first review. Professional, thorough, and reasonably priced."',name:'Karthik Nair',role:'CTO, MedCore Systems',bg:'#3b82f6',init:'KN'},
-          ].map(t => (
+          {testimonialsLoading ? (
+             <div style={{gridColumn: '1 / -1', textAlign: 'center', padding: '2rem'}}>Loading client stories...</div>
+          ) : testimonials.length === 0 ? (
+             <div style={{gridColumn: '1 / -1', textAlign: 'center', padding: '2rem'}}>More client stories coming soon!</div>
+          ) : testimonials.map(t => (
             <div key={t.name} className="testi-card fade-in">
-              <div className="stars">{t.stars}</div>
+              <div className="stars" style={{color: '#f59e0b', fontSize: '1.2rem', letterSpacing: '2px', marginBottom: '1rem'}}>{t.stars}</div>
               <p className="testi-text">{t.text}</p>
               <div className="testi-author">
                 <div className="author-av" style={{background:t.bg}}>{t.init}</div>
@@ -431,7 +447,11 @@ export default function Home() {
           <p className="section-sub">Have questions? We have answers. Here's what people usually ask us.</p>
         </div>
         <div className="faq-container fade-in">
-          {faqs.map((f, i) => (
+          {faqsLoading ? (
+            <div style={{textAlign: 'center', padding: '2rem'}}>Loading FAQs...</div>
+          ) : faqs.length === 0 ? (
+            <div style={{textAlign: 'center', padding: '2rem'}}>More FAQs coming soon!</div>
+          ) : faqs.map((f, i) => (
             <div key={i} className={`faq-item${faqOpen === i ? ' open' : ''}`} onClick={() => setFaqOpen(faqOpen === i ? null : i)}>
               <button className="faq-btn">
                 {f.q}
@@ -556,17 +576,10 @@ export default function Home() {
                   <textarea name="message" placeholder="Brief description - what you're building, current challenges, timeline, etc." value={formState.message} onChange={handleChange} />
                 </div>
 
-                {/* 🛡️ Math CAPTCHA */}
+                {/* 🛡️ Secure Canvas CAPTCHA */}
                 <div className="form-group captcha-group">
                   <label>Quick Security Check 🛡️</label>
-                  <div style={{display:'flex', gap:'10px', alignItems:'center'}}>
-                    <div style={{padding:'0.75rem 1.1rem', background:'var(--blue-light)', border:'1.5px solid var(--blue-pale)', borderRadius:'10px', fontWeight:'800', color:'var(--blue-mid)', fontSize:'1rem', minWidth:'110px', textAlign:'center'}}>
-                      {captcha.a} {captcha.op} {captcha.b} =
-                    </div>
-                    <input type="number" placeholder="?" value={userCaptcha} onChange={e => { setUserCaptcha(e.target.value); setCaptchaError(false); }} style={{width:'80px', borderColor: captchaError ? '#ef4444' : 'var(--border)'}} required />
-                    <button type="button" onClick={generateCaptcha} style={{background:'var(--bg)', border:'1.5px solid var(--border)', borderRadius:'8px', color:'var(--text-muted)', cursor:'pointer', fontSize:'1.1rem', padding:'0.55rem 0.7rem'}} title="New question">↻</button>
-                  </div>
-                  {captchaError && <p style={{color:'#ef4444', fontSize:'0.75rem', marginTop:'6px'}}>❌ Incorrect. Please try again.</p>}
+                  <SecureCaptcha key={captchaKey} onValidate={setIsCaptchaValid} />
                 </div>
 
                 <input type="text" name="_honey" style={{display:'none'}} />

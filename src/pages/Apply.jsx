@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import './Apply.css';
 import { sanitize, validateEmail, validatePhone } from '../utils/security';
 import { supabase } from '../supabaseClient';
+import SecureCaptcha from '../components/SecureCaptcha';
 
 // Role-specific config for the Welcome screen
 const ROLE_CONFIG = {
@@ -132,8 +133,8 @@ export default function Apply() {
   const [customRole, setCustomRole] = useState(''); // used when roleTrack === 'Other'
 
   // CAPTCHA State
-  const [captcha, setCaptcha] = useState({ a: 0, b: 0, op: '+' });
-  const [userCaptcha, setUserCaptcha] = useState('');
+  const [isCaptchaValid, setIsCaptchaValid] = useState(false);
+  const [captchaKey, setCaptchaKey] = useState(0);
   const [captchaError, setCaptchaError] = useState(false);
 
   // Form Validation Errors
@@ -167,33 +168,9 @@ export default function Apply() {
     'Content Writing', 'SEO', 'Data Analysis', 'Talent Acquisition', 'Operations'
   ];
 
-  // 1. Math CAPTCHA generator
-  const generateCaptcha = () => {
-    const ops = ['+', '-'];
-    const op = ops[Math.floor(Math.random() * ops.length)];
-    let a = Math.floor(Math.random() * 90) + 10;
-    let b = Math.floor(Math.random() * 90) + 10;
-    
-    if (op === '-' && b > a) {
-      const temp = a;
-      a = b;
-      b = temp;
-    }
-
-    setCaptcha({ a, b, op });
-    setUserCaptcha('');
-    setCaptchaError(false);
-  };
-
   // 0. Scroll to top on page load
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
-  }, []);
-
-  useEffect(() => {
-    setTimeout(() => {
-      generateCaptcha();
-    }, 0);
   }, []);
 
   // 2. Load draft from localStorage on mount
@@ -307,8 +284,6 @@ export default function Apply() {
       const isProjectValid = formState.essayProject.trim().length >= 20;
       newErrors.essayProject = !isProjectValid;
 
-      const expected = captcha.op === '+' ? (captcha.a + captcha.b) : (captcha.a - captcha.b);
-      const isCaptchaValid = parseInt(userCaptcha) === expected;
       newErrors.captcha = !isCaptchaValid;
       setCaptchaError(!isCaptchaValid);
 
@@ -408,9 +383,8 @@ export default function Apply() {
         'Submitted At':            new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
       };
 
-      const careersEndpoint = import.meta.env.VITE_FORMSUBMIT_CAREERS_URL || 'https://formsubmit.co/ajax/career@in.varsaka.com';
-
-      const res = await fetch(careersEndpoint, {
+      const BACKEND_API = '/.netlify/functions/submitApplication';
+      await fetch(BACKEND_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
@@ -451,8 +425,8 @@ export default function Apply() {
     setSelectedSkills(new Set());
     setCustomSkills([]);
     setUploadedFile(null);
-    setUserCaptcha('');
-    generateCaptcha();
+    setCaptchaKey(prev => prev + 1);
+    setIsCaptchaValid(false);
     setCurrentStep(0);
     setErrors({
       fullName: false,
@@ -1006,28 +980,7 @@ export default function Apply() {
               <label className="form-label" style={{ position: 'static', fontSize: '0.85rem', fontWeight: 600, color: 'var(--blue-mid)', marginBottom: '0.5rem', display: 'block' }}>
                 Quick Security Check 🛡️
               </label>
-              <div className="captcha-container-form">
-                <div className="captcha-question-block">
-                  {captcha.a} {captcha.op} {captcha.b} =
-                </div>
-                <input 
-                  type="number" 
-                  placeholder="?" 
-                  value={userCaptcha}
-                  onChange={(e) => { setUserCaptcha(e.target.value); setErrors(prev => ({ ...prev, captcha: false })); }}
-                  className={`form-input ${errors.captcha ? 'invalid' : ''}`}
-                  style={{ width: '100px', padding: '0.75rem 1rem' }}
-                  required
-                />
-                <button 
-                  type="button" 
-                  onClick={generateCaptcha} 
-                  className="captcha-refresh-btn"
-                  title="Generate new question"
-                >
-                  ↻
-                </button>
-              </div>
+              <SecureCaptcha key={captchaKey} onValidate={(valid) => { setIsCaptchaValid(valid); setErrors(prev => ({ ...prev, captcha: false })); setCaptchaError(false); }} />
               {captchaError && (
                 <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '6px', fontWeight: 600 }}>
                   ❌ Incorrect CAPTCHA answer. Please try again.

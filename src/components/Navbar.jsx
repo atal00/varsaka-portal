@@ -34,8 +34,12 @@ export default function Navbar() {
 
   return (
     <nav className={`navbar${scrolled ? ' navbar--scrolled' : ''}`}>
-      <Link to="/" className="logo" onClick={handleHomeClick}>
-        <img src={logo} alt="Varsaka Labs Logo" style={{ height: 44, borderRadius: 6 }} />
+      <Link to="/" className="logo" onClick={handleHomeClick} style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+        <img src={logo} alt="Varsaka Logo" style={{ height: 44, borderRadius: 8 }} />
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <span style={{ fontSize: '1.45rem', fontWeight: '800', lineHeight: '1.1', color: 'var(--text)' }}>Varsaka</span>
+          <span style={{ fontSize: '0.65rem', fontWeight: '600', letterSpacing: '0.5px', color: '#94a3b8', textTransform: 'uppercase' }}>Quality Engineering</span>
+        </div>
       </Link>
 
       <ul className={`nav-links${menuOpen ? ' active' : ''}`}>
