@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { blogPosts } from '../data/blogPosts';
+import DOMPurify from 'dompurify';
 import SEO from '../components/SEO';
 import './Blog.css';
 
@@ -58,7 +59,7 @@ export default function BlogDetail() {
 
       <div className="blog-container">
         <div className="prose-block" style={{ marginTop: 0, boxShadow: 'none', border: 'none', background: 'transparent', padding: '0 5%' }}>
-          <div className="blog-full-content" dangerouslySetInnerHTML={{ __html: post.content }} />
+          <div className="blog-full-content" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content) }} />
           
           <div style={{ textAlign: 'center', marginTop: '3rem', marginBottom: '2rem' }}>
             <Link to="/blog" className="read-more" style={{ display: 'inline-flex', fontSize: '1.1rem' }}>

@@ -139,7 +139,7 @@ export default function Chatbot() {
       // 🛡️ Log submission time for security
       localStorage.setItem('varsaka_last_sub', Date.now().toString());
 
-      const gsUrl = import.meta.env.VITE_GS_SYNC_URL || 'https://script.google.com/macros/s/AKfycbyw7GZnCMwqeGRViy3a9TFJzRCDKpEAWoJyjquGyC4c7dQOaHFP6uOnmVgPXNxhim46/exec';
+      const gsUrl = import.meta.env.VITE_GS_SYNC_URL;
       if (gsUrl) {
         fetch(gsUrl, {
           method: 'POST',
